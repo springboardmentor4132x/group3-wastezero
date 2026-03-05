@@ -1,0 +1,77 @@
+<div class="page-header">
+  <h2>My Applications</h2>
+  <p>Track the status of your volunteer opportunity applications</p>
+</div>
+
+<div *ngIf="errorMsg" class="alert-wz error mb-3">{{ errorMsg }}</div>
+
+<!-- Filters -->
+<div class="card-wz mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-4 form-wz">
+      <div class="form-group mb-0">
+        <label>Filter by Status</label>
+        <select [(ngModel)]="filterStatus" (change)="filterByStatus()">
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <span class="text-muted" style="font-size:0.85rem">{{ total }} applications</span>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<div *ngIf="!loading && !applications.length" class="card-wz text-center py-5 text-muted">
+  <i class="bi bi-file-earmark-x fs-1 d-block mb-2"></i>
+  No applications yet. Browse <a routerLink="/opportunities">opportunities</a> to apply!
+</div>
+
+<div class="row g-3" *ngIf="!loading && applications.length">
+  <div class="col-md-6 col-lg-4" *ngFor="let app of applications; trackBy: trackById">
+    <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="badge px-2 py-1" [ngClass]="statusBadge(app.status)"
+              style="font-size:0.75rem;border-radius:6px">{{ app.status | titlecase }}</span>
+        <small class="text-muted">{{ app.createdAt | date:'mediumDate' }}</small>
+      </div>
+
+      <h6 class="fw-bold mb-1">{{ getOppTitle(app) }}</h6>
+
+      <div style="font-size:0.82rem;color:#64748b" class="mb-2">
+        <div *ngIf="getOppLocation(app)"><i class="bi bi-geo-alt me-1 text-danger"></i>{{ getOppLocation(app) }}</div>
+        <div *ngIf="getOppStatus(app)">
+          <i class="bi bi-info-circle me-1 text-primary"></i>Opportunity: {{ getOppStatus(app) | titlecase }}
+        </div>
+      </div>
+
+      <div class="mt-auto">
+        <span *ngIf="app.status === 'accepted'" class="text-success fw-bold" style="font-size:0.85rem">
+          <i class="bi bi-check-circle me-1"></i>You've been accepted!
+        </span>
+        <span *ngIf="app.status === 'rejected'" class="text-danger" style="font-size:0.85rem">
+          <i class="bi bi-x-circle me-1"></i>Not selected this time
+        </span>
+        <span *ngIf="app.status === 'pending'" class="text-muted" style="font-size:0.85rem">
+          <i class="bi bi-hourglass-split me-1"></i>Awaiting decision
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div *ngIf="!loading && totalPages > 1" class="d-flex justify-content-center align-items-center gap-3 mt-4">
+  <button class="btn-wz-outline btn-sm" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">
+    <i class="bi bi-chevron-left"></i> Prev
+  </button>
+  <span class="text-muted" style="font-size:0.85rem">Page {{ currentPage }} of {{ totalPages }}</span>
+  <button class="btn-wz-outline btn-sm" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">
+    Next <i class="bi bi-chevron-right"></i>
+  </button>
+</div>

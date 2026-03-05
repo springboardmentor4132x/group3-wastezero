@@ -1,11 +1,13 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { PickupService } from '../../services/pickup.service';
-import { MessageService } from '../../services/message.service';
+import { OpportunityService } from '../../services/opportunity.service';
+import { ApplicationService } from '../../services/application.service';
 import { AuthService } from '../../services/auth.service';
-import { Pickup } from '../../models/models';
+import { SocketService } from '../../services/socket.service';
+import { Opportunity, Application } from '../../models/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-opportunities',
@@ -14,78 +16,152 @@ import { Pickup } from '../../models/models';
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './opportunities.component.html',
 })
-export class OpportunitiesComponent implements OnInit {
-  pickups: Pickup[] = [];
+export class OpportunitiesComponent implements OnInit, OnDestroy {
+  opportunities: Opportunity[] = [];
+  myApplications: Map<string, Application> = new Map();
   loading = true;
   successMsg = '';
   errorMsg = '';
-  filterType = '';
+
   filterLocation = '';
-  wasteTypes = ['', 'Plastic', 'Organic', 'E-Waste', 'Metal', 'Paper', 'Glass', 'Other'];
-  selectedPickup: Pickup | null = null;
-  msgModal: { pickup: Pickup; receiverId: string; receiverName: string } | null = null;
-  msgContent = '';
-  msgSending = false;
+  filterSkills = '';
+
+  currentPage = 1;
+  totalPages = 1;
+  total = 0;
+
+  selectedOpp: Opportunity | null = null;
+  applyingId: string | null = null;
+
+  private subs: Subscription[] = [];
 
   constructor(
     public auth: AuthService,
-    private pickupService: PickupService,
-    private messageService: MessageService,
-  private cdr: ChangeDetectorRef,
+    private oppService: OpportunityService,
+    private appService: ApplicationService,
+    private socketService: SocketService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    if (this.auth.userRole === 'volunteer') {
+      this.loadMyApplications();
+    }
+
+    // Real-time: refresh on opportunity changes
+    this.subs.push(
+      this.socketService.on('opportunity:created').subscribe(() => this.load()),
+      this.socketService.on('opportunity:updated').subscribe(() => this.load()),
+      this.socketService.on('opportunity:deleted').subscribe(() => this.load()),
+      // Refresh application status when decision arrives
+      this.socketService.on('application:updated').subscribe(() => {
+        this.loadMyApplications();
+      }),
+    );
+  }
+
+  ngOnDestroy() {
+    this.subs.forEach((s) => s.unsubscribe());
+  }
 
   load() {
     this.loading = true;
-    this.pickupService.getOpportunities().subscribe({
+    this.errorMsg = '';
+    this.oppService
+      .list({
+        page: this.currentPage,
+        limit: 12,
+        location: this.filterLocation || undefined,
+        skills: this.filterSkills || undefined,
+      })
+      .subscribe({
+        next: (data) => {
+          this.opportunities = data.opportunities;
+          this.totalPages = data.pages;
+          this.total = data.total;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.errorMsg = err.error?.message || 'Failed to load opportunities';
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  loadMyApplications() {
+    this.appService.getMyApplications({ limit: 50 }).subscribe({
       next: (data) => {
-        // Backend returns paginated { pickups, total } — extract the array
-        this.pickups = data.pickups ?? data;
-        this.loading = false;
+        this.myApplications.clear();
+        for (const app of data.applications) {
+          const oppId = typeof app.opportunity_id === 'string'
+            ? app.opportunity_id
+            : (app.opportunity_id as Opportunity)?._id;
+          if (oppId) this.myApplications.set(oppId, app);
+        }
         this.cdr.markForCheck();
       },
-      error: () => { this.loading = false; this.cdr.markForCheck(); },
+      error: () => {},
     });
   }
 
-  get filtered(): Pickup[] {
-    return this.pickups.filter(p => {
-      const typeOk = !this.filterType || p.wasteType === this.filterType;
-      const locOk = !this.filterLocation || p.address.toLowerCase().includes(this.filterLocation.toLowerCase());
-      return typeOk && locOk;
-    });
+  applyFilter() {
+    this.currentPage = 1;
+    this.load();
   }
 
-  accept(id: string) {
+  clearFilters() {
+    this.filterLocation = '';
+    this.filterSkills = '';
+    this.currentPage = 1;
+    this.load();
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.load();
+  }
+
+  apply(oppId: string) {
+    this.applyingId = oppId;
     this.errorMsg = '';
-    this.pickupService.acceptPickup(id).subscribe({
-      next: () => { this.successMsg = 'Pickup accepted! Check My Pickups.'; this.load(); },
-      error: (err) => { this.errorMsg = err.error?.message || 'Error accepting pickup'; },
+    this.successMsg = '';
+    this.appService.apply(oppId).subscribe({
+      next: (app) => {
+        this.successMsg = 'Application submitted successfully!';
+        this.myApplications.set(oppId, app);
+        this.applyingId = null;
+        this.cdr.markForCheck();
+        setTimeout(() => { this.successMsg = ''; this.cdr.markForCheck(); }, 4000);
+      },
+      error: (err) => {
+        this.errorMsg = err.error?.message || 'Failed to apply';
+        this.applyingId = null;
+        this.cdr.markForCheck();
+      },
     });
   }
 
-  openDetail(p: Pickup) { this.selectedPickup = p; }
-  closeDetail() { this.selectedPickup = null; }
-
-  openMsg(pickup: Pickup) {
-    const user = pickup.user_id;
-    if (!user || typeof user === 'string') return;
-    this.msgModal = { pickup, receiverId: (user as any)._id, receiverName: (user as any).name };
-    this.msgContent = '';
+  hasApplied(oppId: string): boolean {
+    return this.myApplications.has(oppId);
   }
 
-  sendMessage() {
-    if (!this.msgModal || !this.msgContent.trim()) return;
-    this.msgSending = true;
-    this.messageService.sendMessage({ receiver_id: this.msgModal.receiverId, content: this.msgContent, pickup_id: this.msgModal.pickup._id }).subscribe({
-      next: () => { this.msgSending = false; this.msgModal = null; this.successMsg = 'Message sent!'; },
-      error: () => { this.msgSending = false; },
-    });
+  getApplicationStatus(oppId: string): string {
+    return this.myApplications.get(oppId)?.status || '';
   }
 
-  getUser(p: Pickup): any { return typeof p.user_id === 'object' ? p.user_id : null; }
+  openDetail(opp: Opportunity) { this.selectedOpp = opp; }
+  closeDetail() { this.selectedOpp = null; }
 
-  trackById(_: number, item: any): string { return item?._id || item?.id || _; }
-  trackByIndex(i: number): number { return i; }
+  getNgoName(opp: Opportunity): string {
+    if (typeof opp.ngo_id === 'object' && opp.ngo_id) {
+      return (opp.ngo_id as any).name || '';
+    }
+    return '';
+  }
+
+  trackById(_: number, item: any): string { return item?._id || _; }
 }

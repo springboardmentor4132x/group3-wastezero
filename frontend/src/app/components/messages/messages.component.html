@@ -11,7 +11,7 @@
 </div>
 
 <!-- New conversation panel -->
-<div *ngIf="showNewConv" class="card-wz mb-3">
+<div *ngIf="showNewConv" class="card-wz mb-3 chat-new-conv">
   <h6 class="fw-bold mb-3">Start New Conversation</h6>
   <div class="row g-2 form-wz align-items-end">
     <div class="col-md-5 form-group mb-0">
@@ -40,15 +40,15 @@
     <div *ngIf="!conversations.length" class="text-center py-4 text-muted" style="font-size:0.875rem">No conversations yet</div>
     <div *ngFor="let conv of conversations; trackBy: trackById"
       class="conversation-item"
-      [class.active]="selectedConv?.partner._id === conv.partner._id"
+      [class.active]="selectedConv?.partner?._id === conv.partner?._id"
       (click)="selectConversation(conv)">
       <div class="d-flex align-items-center gap-2">
         <div style="width:36px;height:36px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;flex-shrink:0">
-          {{ partnerInitials(conv.partner.name) }}
+          {{ partnerInitials(conv.partner?.name) }}
         </div>
         <div style="flex:1;min-width:0">
-          <div class="conv-name">{{ conv.partner.name }}</div>
-          <div class="conv-preview">{{ conv.lastMessage.content | slice:0:30 }}{{ conv.lastMessage.content.length > 30 ? '...' : '' }}</div>
+          <div class="conv-name">{{ conv.partner?.name }}</div>
+          <div class="conv-preview">{{ (conv.lastMessage?.content || '') | slice:0:30 }}{{ (conv.lastMessage?.content?.length || 0) > 30 ? '...' : '' }}</div>
         </div>
         <div *ngIf="conv.unreadCount > 0">
           <span class="badge bg-success rounded-pill">{{ conv.unreadCount }}</span>
@@ -85,11 +85,15 @@
           <div>{{ msg.content }}</div>
           <div class="msg-time">{{ msg.timestamp | date:'HH:mm · MMM d' }}</div>
         </div>
+        <!-- Typing indicator -->
+        <div *ngIf="typingUser" class="typing-indicator">
+          <i class="bi bi-three-dots me-1"></i>{{ typingUser }} is typing...
+        </div>
         <div #msgEnd></div>
       </div>
 
       <div class="chat-input">
-        <input type="text" [(ngModel)]="newMessage" placeholder="Type a message..." (keyup.enter)="send()" />
+        <input type="text" [(ngModel)]="newMessage" placeholder="Type a message..." (keyup.enter)="send()" (input)="onTyping()" />
         <button class="btn-wz-primary" (click)="send()" [disabled]="sending || !newMessage.trim()" style="padding:8px 16px">
           <i class="bi bi-send"></i>
         </button>

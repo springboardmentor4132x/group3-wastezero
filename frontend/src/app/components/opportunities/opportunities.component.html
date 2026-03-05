@@ -1,6 +1,6 @@
 <div class="page-header">
-  <h2>Pickup Opportunities</h2>
-  <p>Browse and accept available waste pickup requests near you</p>
+  <h2>Volunteer Opportunities</h2>
+  <p>Browse open volunteering opportunities and apply</p>
 </div>
 
 <div *ngIf="successMsg" class="alert-wz success mb-3">{{ successMsg }}</div>
@@ -11,99 +11,124 @@
   <div class="row g-3 align-items-end">
     <div class="col-md-4 form-wz">
       <div class="form-group mb-0">
-        <label>Waste Type</label>
-        <select [(ngModel)]="filterType">
-          <option value="">All Types</option>
-          <option *ngFor="let wt of wasteTypes.slice(1); trackBy: trackByIndex" [value]="wt">{{ wt }}</option>
-        </select>
-      </div>
-    </div>
-    <div class="col-md-4 form-wz">
-      <div class="form-group mb-0">
         <label>Location</label>
         <input type="text" [(ngModel)]="filterLocation" placeholder="Filter by location..." />
       </div>
     </div>
-    <div class="col-md-4">
-      <button class="btn-wz-outline" (click)="filterType=''; filterLocation=''">Clear Filters</button>
+    <div class="col-md-4 form-wz">
+      <div class="form-group mb-0">
+        <label>Skills (comma-separated)</label>
+        <input type="text" [(ngModel)]="filterSkills" placeholder="e.g. sorting, driving" />
+      </div>
+    </div>
+    <div class="col-md-4 d-flex gap-2 align-items-end">
+      <button class="btn-wz-primary" (click)="applyFilter()">
+        <i class="bi bi-funnel me-1"></i>Filter
+      </button>
+      <button class="btn-wz-outline" (click)="clearFilters()">Clear</button>
     </div>
   </div>
 </div>
 
 <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
 
-<div *ngIf="!loading && !filtered.length" class="card-wz text-center py-5 text-muted">
+<div *ngIf="!loading && !opportunities.length" class="card-wz text-center py-5 text-muted">
   <i class="bi bi-search fs-1 d-block mb-2"></i>
-  No open pickup opportunities found.
+  No open volunteer opportunities found.
 </div>
 
-<div class="row g-3" *ngIf="!loading">
-  <div class="col-md-6 col-lg-4" *ngFor="let p of filtered; trackBy: trackById">
+<div class="row g-3" *ngIf="!loading && opportunities.length">
+  <div class="col-md-6 col-lg-4" *ngFor="let opp of opportunities; trackBy: trackById">
     <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span>
-        <span class="badge-open">Open</span>
+        <span class="badge bg-success text-white px-2 py-1" style="font-size:0.75rem;border-radius:6px">{{ opp.status | titlecase }}</span>
+        <small class="text-muted">{{ opp.createdAt | date:'mediumDate' }}</small>
       </div>
-      <h6 class="fw-bold mb-1">{{ p.title }}</h6>
-      <p *ngIf="p.description" class="text-muted mb-2" style="font-size:0.8rem">{{ p.description }}</p>
+      <h6 class="fw-bold mb-1">{{ opp.title }}</h6>
+      <p class="text-muted mb-2" style="font-size:0.8rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ opp.description }}</p>
 
-      <div style="font-size:0.82rem;color:#64748b" class="mb-3">
-        <div><i class="bi bi-geo-alt me-1 text-danger"></i>{{ p.address }}</div>
-        <div><i class="bi bi-calendar me-1 text-primary"></i>{{ p.preferredDate | date:'mediumDate' }} at {{ p.preferredTime }}</div>
-        <div><i class="bi bi-box me-1 text-warning"></i>{{ p.estimatedQuantity }}</div>
-        <div *ngIf="getUser(p)"><i class="bi bi-person me-1"></i>{{ getUser(p).name }}</div>
+      <div style="font-size:0.82rem;color:#64748b" class="mb-2">
+        <div><i class="bi bi-geo-alt me-1 text-danger"></i>{{ opp.location }}</div>
+        <div><i class="bi bi-clock me-1 text-primary"></i>{{ opp.duration }}</div>
+        <div *ngIf="getNgoName(opp)"><i class="bi bi-building me-1 text-success"></i>{{ getNgoName(opp) }}</div>
+      </div>
+
+      <div class="mb-3">
+        <span *ngFor="let skill of opp.requiredSkills; trackBy: trackById"
+              class="badge bg-light text-dark border me-1 mb-1"
+              style="font-size:0.72rem">{{ skill }}</span>
       </div>
 
       <div class="d-flex gap-2 flex-wrap mt-auto">
-        <button class="btn-wz-primary btn-sm" (click)="accept(p._id)">
-          <i class="bi bi-check-lg me-1"></i>Accept
-        </button>
-        <button class="btn-wz-outline btn-sm" (click)="openDetail(p)">
+        <!-- Volunteer: Apply button -->
+        <ng-container *ngIf="auth.userRole === 'volunteer'">
+          <button *ngIf="!hasApplied(opp._id)"
+                  class="btn-wz-primary btn-sm"
+                  (click)="apply(opp._id)"
+                  [disabled]="applyingId === opp._id">
+            <i class="bi bi-send me-1"></i>
+            {{ applyingId === opp._id ? 'Applying...' : 'Apply' }}
+          </button>
+          <span *ngIf="hasApplied(opp._id)"
+                class="badge px-2 py-1"
+                [ngClass]="{
+                  'bg-warning text-dark': getApplicationStatus(opp._id) === 'pending',
+                  'bg-success text-white': getApplicationStatus(opp._id) === 'accepted',
+                  'bg-danger text-white': getApplicationStatus(opp._id) === 'rejected'
+                }"
+                style="font-size:0.75rem;border-radius:6px">
+            {{ getApplicationStatus(opp._id) | titlecase }}
+          </span>
+        </ng-container>
+        <button class="btn-wz-outline btn-sm" (click)="openDetail(opp)">
           <i class="bi bi-eye me-1"></i>Details
-        </button>
-        <button class="btn btn-sm btn-outline-secondary" (click)="openMsg(p)">
-          <i class="bi bi-chat me-1"></i>Contact
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Detail Modal -->
-<div *ngIf="selectedPickup" class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
-  <div class="card-wz" style="max-width:500px;width:100%">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0">Pickup Details</h5>
-      <button class="btn btn-sm btn-outline-secondary" (click)="closeDetail()"><i class="bi bi-x"></i></button>
-    </div>
-    <div class="form-wz">
-      <p><strong>Title:</strong> {{ selectedPickup.title }}</p>
-      <p><strong>Waste Type:</strong> <span class="waste-tag waste-{{selectedPickup.wasteType}}">{{ selectedPickup.wasteType }}</span></p>
-      <p><strong>Description:</strong> {{ selectedPickup.description || 'None' }}</p>
-      <p><strong>Quantity:</strong> {{ selectedPickup.estimatedQuantity }}</p>
-      <p><strong>Address:</strong> {{ selectedPickup.address }}</p>
-      <p><strong>Date:</strong> {{ selectedPickup.preferredDate | date:'fullDate' }}</p>
-      <p><strong>Time:</strong> {{ selectedPickup.preferredTime }}</p>
-      <p *ngIf="selectedPickup.contactDetails"><strong>Contact:</strong> {{ selectedPickup.contactDetails }}</p>
-      <p *ngIf="getUser(selectedPickup)"><strong>Requested by:</strong> {{ getUser(selectedPickup).name }}</p>
-    </div>
-    <div class="d-flex gap-2 justify-content-end mt-2">
-      <button class="btn-wz-outline" (click)="closeDetail()">Close</button>
-      <button class="btn-wz-primary" (click)="accept(selectedPickup._id); closeDetail()">Accept Pickup</button>
-    </div>
-  </div>
+<!-- Pagination -->
+<div *ngIf="!loading && totalPages > 1" class="d-flex justify-content-center align-items-center gap-3 mt-4">
+  <button class="btn-wz-outline btn-sm" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">
+    <i class="bi bi-chevron-left"></i> Prev
+  </button>
+  <span class="text-muted" style="font-size:0.85rem">Page {{ currentPage }} of {{ totalPages }} ({{ total }} total)</span>
+  <button class="btn-wz-outline btn-sm" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">
+    Next <i class="bi bi-chevron-right"></i>
+  </button>
 </div>
 
-<!-- Message Modal -->
-<div *ngIf="msgModal" class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center">
-  <div class="card-wz" style="width:420px;max-width:95vw">
-    <h5 class="fw-bold mb-3">Message {{ msgModal.receiverName }}</h5>
-    <div class="form-group form-wz">
-      <textarea [(ngModel)]="msgContent" rows="3" placeholder="Type your message..."></textarea>
+<!-- Detail Modal -->
+<div *ngIf="selectedOpp" class="modal-overlay"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="card-wz" style="max-width:560px;width:100%">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">Opportunity Details</h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeDetail()"><i class="bi bi-x"></i></button>
     </div>
-    <div class="d-flex gap-2 justify-content-end">
-      <button class="btn-wz-outline" (click)="msgModal = null">Cancel</button>
-      <button class="btn-wz-primary" (click)="sendMessage()" [disabled]="msgSending">Send</button>
+
+    <div class="form-wz">
+      <p><strong>Title:</strong> {{ selectedOpp.title }}</p>
+      <p><strong>Description:</strong> {{ selectedOpp.description }}</p>
+      <p><strong>Location:</strong> {{ selectedOpp.location }}</p>
+      <p><strong>Duration:</strong> {{ selectedOpp.duration }}</p>
+      <p><strong>Status:</strong> <span class="badge bg-success text-white">{{ selectedOpp.status | titlecase }}</span></p>
+      <p *ngIf="getNgoName(selectedOpp)"><strong>Posted by:</strong> {{ getNgoName(selectedOpp) }}</p>
+      <p><strong>Required Skills:</strong></p>
+      <div class="mb-2">
+        <span *ngFor="let skill of selectedOpp.requiredSkills" class="badge bg-light text-dark border me-1 mb-1">{{ skill }}</span>
+      </div>
+      <p><strong>Posted:</strong> {{ selectedOpp.createdAt | date:'fullDate' }}</p>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end mt-2">
+      <button class="btn-wz-outline" (click)="closeDetail()">Close</button>
+      <button *ngIf="auth.userRole === 'volunteer' && !hasApplied(selectedOpp._id)"
+              class="btn-wz-primary"
+              (click)="apply(selectedOpp._id); closeDetail()">
+        <i class="bi bi-send me-1"></i>Apply Now
+      </button>
     </div>
   </div>
 </div>

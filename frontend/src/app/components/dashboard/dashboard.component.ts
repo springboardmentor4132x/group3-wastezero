@@ -1,11 +1,13 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { AdminService } from '../../services/admin.service';
 import { PickupService } from '../../services/pickup.service';
+import { SocketService } from '../../services/socket.service';
 import { User } from '../../models/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,17 +16,20 @@ import { User } from '../../models/models';
   imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.component.html',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   user: User | null = null;
   stats: any = {};
   recentPickups: any[] = [];
   loading = true;
+
+  private subs: Subscription[] = [];
 
   constructor(
     public auth: AuthService,
     private userService: UserService,
     private adminService: AdminService,
     private pickupService: PickupService,
+    private socketService: SocketService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -32,6 +37,19 @@ export class DashboardComponent implements OnInit {
     this.user = this.auth.currentUser;
     this.loadStats();
     this.loadRecentPickups();
+
+    // Real-time: refresh stats when relevant events fire
+    this.subs.push(
+      this.socketService.on('pickup:accepted').subscribe(() => { this.loadStats(); this.loadRecentPickups(); }),
+      this.socketService.on('pickup:completed').subscribe(() => { this.loadStats(); this.loadRecentPickups(); }),
+      this.socketService.on('opportunity:created').subscribe(() => this.loadStats()),
+      this.socketService.on('application:created').subscribe(() => this.loadStats()),
+      this.socketService.on('application:updated').subscribe(() => this.loadStats()),
+    );
+  }
+
+  ngOnDestroy() {
+    this.subs.forEach((s) => s.unsubscribe());
   }
 
   loadStats() {

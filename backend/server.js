@@ -1,13 +1,19 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const compression = require('compression');
 const connectDB = require('./config/db');
+const { initSocket } = require('./socket');
 
 // Connect to MongoDB
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialise Socket.IO on the HTTP server
+initSocket(server);
 
 // ── Performance Middleware ─────────────────────────────────────────────────
 // Gzip/deflate all responses > 1KB
@@ -38,6 +44,10 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/pickups', require('./routes/pickups'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/opportunities', require('./routes/opportunities'));
+app.use('/api/applications', require('./routes/applications'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/search', require('./routes/search'));
 
 // Health check — no cache
 app.get('/api/health', (req, res) => {
@@ -57,13 +67,16 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`WasteZero Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-});
 
-// Enable HTTP keep-alive for connection reuse
-server.keepAliveTimeout = 65000;
-server.headersTimeout = 66000;
+if (!module.parent) {
+  // Only listen when run directly (not when require()'d by tests)
+  server.listen(PORT, () => {
+    console.log(`WasteZero Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log('Socket.IO ready for connections');
+  });
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
+}
 
-module.exports = app;
+module.exports = { app, server };

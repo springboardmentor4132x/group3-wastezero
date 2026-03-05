@@ -38,6 +38,12 @@ export const routes: Routes = [
         loadComponent: () => import('./components/opportunities/opportunities.component').then(m => m.OpportunitiesComponent),
       },
       {
+        path: 'my-applications',
+        canActivate: [authGuard],
+        data: { roles: ['volunteer'] },
+        loadComponent: () => import('./components/my-applications/my-applications.component').then(m => m.MyApplicationsComponent),
+      },
+      {
         path: 'messages',
         loadComponent: () => import('./components/messages/messages.component').then(m => m.MessagesComponent),
       },
@@ -74,6 +80,12 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: { roles: ['admin'] },
         loadComponent: () => import('./components/admin/admin-reports/admin-reports.component').then(m => m.AdminReportsComponent),
+      },
+      {
+        path: 'admin/opportunities',
+        canActivate: [authGuard],
+        data: { roles: ['admin'] },
+        loadComponent: () => import('./components/admin/admin-opportunities/admin-opportunities.component').then(m => m.AdminOpportunitiesComponent),
       },
     ],
   },

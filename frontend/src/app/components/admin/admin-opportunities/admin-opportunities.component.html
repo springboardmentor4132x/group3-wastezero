@@ -1,0 +1,211 @@
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <div>
+    <h2>Manage Opportunities</h2>
+    <p>Create, edit, and manage volunteer opportunities</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button *ngIf="activeTab !== 'list'" class="btn-wz-outline" (click)="backToList()">
+      <i class="bi bi-arrow-left me-1"></i>Back to List
+    </button>
+    <button *ngIf="activeTab === 'list'" class="btn-wz-primary" (click)="openCreate()">
+      <i class="bi bi-plus-lg me-1"></i>Create Opportunity
+    </button>
+  </div>
+</div>
+
+<div *ngIf="successMsg" class="alert-wz success mb-3">{{ successMsg }}</div>
+<div *ngIf="errorMsg" class="alert-wz error mb-3">{{ errorMsg }}</div>
+
+<!-- ═══════════════  LIST TAB  ═══════════════ -->
+<ng-container *ngIf="activeTab === 'list'">
+  <!-- Status filter -->
+  <div class="card-wz mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4 form-wz">
+        <div class="form-group mb-0">
+          <label>Filter by Status</label>
+          <select [(ngModel)]="filterStatus" (change)="filterByStatus()">
+            <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="in-progress">In Progress</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <span class="text-muted" style="font-size:0.85rem">{{ total }} opportunities found</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+  <div *ngIf="!loading && !opportunities.length" class="card-wz text-center py-5 text-muted">
+    <i class="bi bi-clipboard-plus fs-1 d-block mb-2"></i>
+    No opportunities found. Create your first one!
+  </div>
+
+  <div class="row g-3" *ngIf="!loading && opportunities.length">
+    <div class="col-md-6 col-lg-4" *ngFor="let opp of opportunities; trackBy: trackById">
+      <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge text-white px-2 py-1" [ngClass]="statusBadgeClass(opp.status)"
+                style="font-size:0.75rem;border-radius:6px">{{ opp.status | titlecase }}</span>
+          <small class="text-muted">{{ opp.createdAt | date:'mediumDate' }}</small>
+        </div>
+        <h6 class="fw-bold mb-1">{{ opp.title }}</h6>
+        <p class="text-muted mb-2" style="font-size:0.8rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+          {{ opp.description }}
+        </p>
+        <div style="font-size:0.82rem;color:#64748b" class="mb-2">
+          <div><i class="bi bi-geo-alt me-1 text-danger"></i>{{ opp.location }}</div>
+          <div><i class="bi bi-clock me-1 text-primary"></i>{{ opp.duration }}</div>
+        </div>
+        <div class="mb-3">
+          <span *ngFor="let skill of opp.requiredSkills; trackBy: trackById"
+                class="badge bg-light text-dark border me-1 mb-1" style="font-size:0.72rem">{{ skill }}</span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap mt-auto">
+          <button class="btn-wz-primary btn-sm" (click)="openApplications(opp)">
+            <i class="bi bi-people me-1"></i>Applications
+          </button>
+          <button class="btn-wz-outline btn-sm" (click)="openEdit(opp)">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="deleteOpportunity(opp)">
+            <i class="bi bi-trash me-1"></i>Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!loading && totalPages > 1" class="d-flex justify-content-center align-items-center gap-3 mt-4">
+    <button class="btn-wz-outline btn-sm" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">
+      <i class="bi bi-chevron-left"></i> Prev
+    </button>
+    <span class="text-muted" style="font-size:0.85rem">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button class="btn-wz-outline btn-sm" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">
+      Next <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+</ng-container>
+
+<!-- ═══════════════  CREATE / EDIT TAB  ═══════════════ -->
+<ng-container *ngIf="activeTab === 'create' || activeTab === 'edit'">
+  <div class="card-wz" style="max-width:700px">
+    <h5 class="fw-bold mb-3">{{ editingId ? 'Edit Opportunity' : 'Create New Opportunity' }}</h5>
+
+    <div *ngIf="formErrors.length" class="alert-wz error mb-3">
+      <div *ngFor="let e of formErrors">{{ e }}</div>
+    </div>
+
+    <div class="form-wz">
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" [(ngModel)]="form.title" placeholder="Opportunity title" maxlength="200" />
+      </div>
+
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea [(ngModel)]="form.description" rows="4" placeholder="Detailed description..." maxlength="2000"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Required Skills *</label>
+        <div class="d-flex gap-2 mb-2">
+          <input type="text" [(ngModel)]="newSkill" placeholder="Add a skill and press Enter"
+                 (keydown)="onSkillKeydown($event)" style="flex:1" />
+          <button class="btn-wz-outline btn-sm" type="button" (click)="addSkill()">Add</button>
+        </div>
+        <div *ngIf="form.requiredSkills.length">
+          <span *ngFor="let skill of form.requiredSkills; let i = index"
+                class="badge bg-success text-white me-1 mb-1 px-2 py-1" style="font-size:0.8rem;cursor:pointer"
+                (click)="removeSkill(i)" title="Click to remove">
+            {{ skill }} <i class="bi bi-x ms-1"></i>
+          </span>
+        </div>
+        <small class="text-muted" *ngIf="!form.requiredSkills.length">No skills added yet</small>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Duration *</label>
+            <input type="text" [(ngModel)]="form.duration" placeholder="e.g. 2 hours, 1 day" />
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Location *</label>
+            <input type="text" [(ngModel)]="form.location" placeholder="City or area" />
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="editingId" class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="form.status">
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn-wz-primary" (click)="saveOpportunity()" [disabled]="saving">
+          <i class="bi bi-check-lg me-1"></i>{{ saving ? 'Saving...' : (editingId ? 'Update' : 'Create') }}
+        </button>
+        <button class="btn-wz-outline" (click)="backToList()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- ═══════════════  APPLICATIONS TAB  ═══════════════ -->
+<ng-container *ngIf="activeTab === 'applications' && selectedOppForApps">
+  <div class="card-wz mb-4">
+    <h5 class="fw-bold mb-1">Applications for: {{ selectedOppForApps.title }}</h5>
+    <p class="text-muted mb-0" style="font-size:0.85rem">
+      Status: <span class="badge text-white" [ngClass]="statusBadgeClass(selectedOppForApps.status)">{{ selectedOppForApps.status | titlecase }}</span>
+      &nbsp;·&nbsp; Location: {{ selectedOppForApps.location }}
+    </p>
+  </div>
+
+  <div *ngIf="appsLoading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+  <div *ngIf="!appsLoading && !applications.length" class="card-wz text-center py-5 text-muted">
+    <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+    No applications received yet.
+  </div>
+
+  <div class="row g-3" *ngIf="!appsLoading && applications.length">
+    <div class="col-md-6 col-lg-4" *ngFor="let app of applications; trackBy: trackById">
+      <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge px-2 py-1" [ngClass]="appStatusBadge(app.status)"
+                style="font-size:0.75rem;border-radius:6px">{{ app.status | titlecase }}</span>
+          <small class="text-muted">{{ app.createdAt | date:'mediumDate' }}</small>
+        </div>
+        <h6 class="fw-bold mb-1">{{ getVolunteerName(app) }}</h6>
+        <div style="font-size:0.82rem;color:#64748b" class="mb-2">
+          <div><i class="bi bi-envelope me-1"></i>{{ getVolunteerEmail(app) }}</div>
+          <div *ngIf="getVolunteerSkills(app).length">
+            <i class="bi bi-tools me-1"></i>
+            <span *ngFor="let s of getVolunteerSkills(app)" class="badge bg-light text-dark border me-1" style="font-size:0.7rem">{{ s }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="app.status === 'pending'" class="d-flex gap-2 mt-auto">
+          <button class="btn-wz-primary btn-sm" (click)="decide(app, 'accepted')" [disabled]="decidingId === app._id">
+            <i class="bi bi-check-lg me-1"></i>Accept
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="decide(app, 'rejected')" [disabled]="decidingId === app._id">
+            <i class="bi bi-x-lg me-1"></i>Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -2,7 +2,11 @@
   <!-- Left Panel -->
   <div class="auth-left">
     <div class="auth-brand">
-      <i class="bi bi-recycle"></i>
+      <img src="assets/wastezero_logo.gif"
+           alt="WasteZero Logo"
+           class="wz-logo wz-logo-auth"
+           draggable="false"
+           (dragstart)="$event.preventDefault()">
       WasteZero
     </div>
     <h1 class="auth-title">Join the Recycling Revolution</h1>
@@ -50,16 +54,22 @@
       <form (ngSubmit)="onLogin()" class="form-wz">
         <div class="form-group">
           <label>Username</label>
-          <input type="text" [(ngModel)]="loginForm.username" name="username" placeholder="Your username" />
+          <input type="text" [(ngModel)]="loginForm.username" name="username" placeholder="Your username" autocomplete="username" />
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" [(ngModel)]="loginForm.password" name="password" placeholder="Your password" />
+          <div class="input-pw-wrap">
+            <input [type]="showLoginPw ? 'text' : 'password'" [(ngModel)]="loginForm.password" name="password" placeholder="Your password" autocomplete="current-password" />
+            <button type="button" class="btn-pw-toggle" (click)="toggleLoginPw()" tabindex="-1">
+              <i class="bi" [class.bi-eye]="!showLoginPw" [class.bi-eye-slash]="showLoginPw"></i>
+            </button>
+          </div>
         </div>
         <button type="submit" class="btn-wz-primary w-100" [disabled]="loading">
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
           Login
         </button>
+        <p class="form-switch-text">Don't have an account? <a (click)="switchTab('register')">Create one</a></p>
       </form>
     </div>
 
@@ -87,11 +97,23 @@
         <div class="row g-2">
           <div class="col-6 form-group">
             <label>Password <span class="text-danger">*</span></label>
-            <input type="password" [(ngModel)]="registerForm.password" name="password" placeholder="Create a password" />
+            <div class="input-pw-wrap">
+              <input [type]="showRegPw ? 'text' : 'password'" [(ngModel)]="registerForm.password" name="password" placeholder="Create a password" autocomplete="new-password" />
+              <button type="button" class="btn-pw-toggle" (click)="toggleRegPw()" tabindex="-1">
+                <i class="bi" [class.bi-eye]="!showRegPw" [class.bi-eye-slash]="showRegPw"></i>
+              </button>
+            </div>
+            <small class="form-hint" *ngIf="registerForm.password && registerForm.password.length < 6">Minimum 6 characters</small>
           </div>
           <div class="col-6 form-group">
             <label>Confirm Password <span class="text-danger">*</span></label>
-            <input type="password" [(ngModel)]="registerForm.confirmPassword" name="confirmPassword" placeholder="Confirm your password" />
+            <div class="input-pw-wrap">
+              <input [type]="showRegConfirmPw ? 'text' : 'password'" [(ngModel)]="registerForm.confirmPassword" name="confirmPassword" placeholder="Confirm your password" autocomplete="new-password" />
+              <button type="button" class="btn-pw-toggle" (click)="toggleRegConfirmPw()" tabindex="-1">
+                <i class="bi" [class.bi-eye]="!showRegConfirmPw" [class.bi-eye-slash]="showRegConfirmPw"></i>
+              </button>
+            </div>
+            <small class="form-hint text-danger" *ngIf="registerForm.confirmPassword && registerForm.password !== registerForm.confirmPassword">Passwords don't match</small>
           </div>
         </div>
         <div class="form-group">
@@ -114,6 +136,7 @@
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
           Create Account
         </button>
+        <p class="form-switch-text">Already have an account? <a (click)="switchTab('login')">Log in</a></p>
       </form>
     </div>
   </div>

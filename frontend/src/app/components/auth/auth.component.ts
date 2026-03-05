@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,6 +17,10 @@ export class AuthComponent {
   errorMsg = '';
   successMsg = '';
 
+  showLoginPw = false;
+  showRegPw = false;
+  showRegConfirmPw = false;
+
   loginForm = { username: '', password: '' };
 
   registerForm = {
@@ -24,7 +28,11 @@ export class AuthComponent {
     role: 'user', skills: '', location: '', bio: '', phone: '',
   };
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   switchTab(tab: 'login' | 'register') {
     this.activeTab = tab;
@@ -39,9 +47,14 @@ export class AuthComponent {
       return;
     }
     this.loading = true;
+    this.cdr.markForCheck();
     this.authService.login(this.loginForm).subscribe({
       next: () => { this.loading = false; this.router.navigate(['/dashboard']); },
-      error: (err) => { this.loading = false; this.errorMsg = err.error?.message || 'Login failed.'; },
+      error: (err) => {
+        this.loading = false;
+        this.errorMsg = err.error?.message || 'Login failed. Please check your credentials.';
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -62,13 +75,22 @@ export class AuthComponent {
     }
 
     this.loading = true;
+    this.cdr.markForCheck();
     const payload = {
       ...this.registerForm,
       skills: this.registerForm.skills ? this.registerForm.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
     this.authService.register(payload).subscribe({
       next: () => { this.loading = false; this.router.navigate(['/dashboard']); },
-      error: (err) => { this.loading = false; this.errorMsg = err.error?.message || 'Registration failed.'; },
+      error: (err) => {
+        this.loading = false;
+        this.errorMsg = err.error?.message || 'Registration failed. Please try again.';
+        this.cdr.markForCheck();
+      },
     });
   }
+
+  toggleLoginPw() { this.showLoginPw = !this.showLoginPw; }
+  toggleRegPw() { this.showRegPw = !this.showRegPw; }
+  toggleRegConfirmPw() { this.showRegConfirmPw = !this.showRegConfirmPw; }
 }

@@ -4,7 +4,11 @@
 <nav class="landing-nav" [class.scrolled]="navScrolled()" role="navigation" aria-label="Main navigation">
   <div class="nav-inner">
     <a class="nav-brand" (click)="scrollTo('hero')" tabindex="0" role="button">
-      <i class="bi bi-recycle" aria-hidden="true"></i>
+      <img src="assets/wastezero_logo.gif"
+           alt="WasteZero"
+           class="wz-logo wz-logo-nav"
+           draggable="false"
+           (dragstart)="$event.preventDefault()">
       <span>WasteZero</span>
     </a>
 
@@ -695,7 +699,11 @@
   <div class="footer-inner">
     <div class="footer-brand">
       <a class="nav-brand" (click)="scrollTo('hero')">
-        <i class="bi bi-recycle" aria-hidden="true"></i>
+        <img src="assets/wastezero_logo.gif"
+             alt="WasteZero"
+             class="wz-logo wz-logo-footer"
+             draggable="false"
+             (dragstart)="$event.preventDefault()">
         <span>WasteZero</span>
       </a>
       <p>Smart waste pickup for a cleaner, greener future.</p>

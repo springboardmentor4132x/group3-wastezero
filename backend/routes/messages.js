@@ -3,6 +3,8 @@ const router = express.Router();
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { emitToUser } = require('../socket');
+const { createNotification } = require('../controllers/notificationController');
 
 // POST /api/messages - Send a message
 router.post('/', protect, async (req, res) => {
@@ -23,6 +25,20 @@ router.post('/', protect, async (req, res) => {
     const populated = await Message.findById(message._id)
       .populate('sender_id', 'name username role')
       .populate('receiver_id', 'name username role');
+
+    // ── Real-time: emit message to recipient ──
+    try {
+      emitToUser(receiver_id, 'chat:message', populated.toObject());
+      await createNotification({
+        user_id: receiver_id,
+        type: 'chat:message',
+        title: 'New Message',
+        message: `${req.user.name}: ${content.slice(0, 80)}${content.length > 80 ? '...' : ''}`,
+        ref_id: message._id,
+        ref_model: 'Message',
+      });
+    } catch (e) { console.error('Socket/notif emit error:', e.message); }
+
     res.status(201).json(populated);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

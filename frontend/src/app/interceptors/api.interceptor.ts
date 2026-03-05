@@ -17,11 +17,15 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 
-  // Never cache message/conversation routes — they need to be realtime
+  // Never cache real-time routes — they need to be fresh
   const isMessagesRoute = authedReq.url.includes('/api/messages');
+  const isRealtimeRoute =
+    isMessagesRoute ||
+    authedReq.url.includes('/api/notifications') ||
+    authedReq.url.includes('/api/search');
 
   // 2. Return cached response for idempotent GET requests
-  if (authedReq.method === 'GET' && isApiCall && !isMessagesRoute) {
+  if (authedReq.method === 'GET' && isApiCall && !isRealtimeRoute) {
     const cached = cache.get(authedReq.urlWithParams);
     if (cached && cached.expiresAt > Date.now()) {
       return of(cached.response.clone());
@@ -30,11 +34,11 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authedReq).pipe(
     tap((event) => {
-      // 3. Cache successful GET responses (skip messages)
+      // 3. Cache successful GET responses (skip real-time routes)
       if (
         authedReq.method === 'GET' &&
         isApiCall &&
-        !isMessagesRoute &&
+        !isRealtimeRoute &&
         event instanceof HttpResponse &&
         event.status === 200
       ) {

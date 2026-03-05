@@ -40,4 +40,12 @@ const volunteerOrAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly, volunteerOrAdmin };
+const volunteerOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'volunteer') {
+    next();
+  } else {
+    res.status(403).json({ error: true, message: 'Volunteer access required' });
+  }
+};
+
+module.exports = { protect, adminOnly, volunteerOnly, volunteerOrAdmin };

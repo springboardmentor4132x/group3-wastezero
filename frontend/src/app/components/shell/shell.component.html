@@ -1,9 +1,17 @@
+<!-- Sidebar overlay (mobile backdrop) -->
+<div class="sidebar-overlay" [class.open]="sidebarOpen" (click)="closeSidebar()"></div>
+
 <div class="app-shell">
   <!-- Sidebar -->
-  <nav class="sidebar">
+  <nav class="sidebar" [class.open]="sidebarOpen">
     <div class="sidebar-logo">
       <a routerLink="/dashboard" class="brand">
-        <i class="bi bi-recycle"></i> WasteZero
+        <img src="assets/wastezero_logo.gif"
+             alt="WasteZero Logo"
+             class="wz-logo wz-logo-sidebar"
+             draggable="false"
+             (dragstart)="$event.preventDefault()">
+        WasteZero
       </a>
     </div>
 
@@ -36,6 +44,9 @@
         <a routerLink="/opportunities" [class.active]="isActive('/opportunities')">
           <i class="bi bi-search"></i> Opportunities
         </a>
+        <a routerLink="/my-applications" [class.active]="isActive('/my-applications')">
+          <i class="bi bi-file-earmark-text"></i> My Applications
+        </a>
         <a routerLink="/my-pickups" [class.active]="isActive('/my-pickups')">
           <i class="bi bi-truck"></i> My Assigned Pickups
         </a>
@@ -45,6 +56,9 @@
       <ng-container *ngIf="user?.role === 'admin'">
         <a routerLink="/admin/panel" [class.active]="isActive('/admin/panel')">
           <i class="bi bi-grid"></i> Admin Panel
+        </a>
+        <a routerLink="/admin/opportunities" [class.active]="isActive('/admin/opportunities')">
+          <i class="bi bi-clipboard-check"></i> Opportunities
         </a>
         <a routerLink="/admin/pickups" [class.active]="isActive('/admin/pickups')">
           <i class="bi bi-truck"></i> All Pickups
@@ -95,17 +109,81 @@
   <div class="main-content">
     <!-- Top bar -->
     <div class="top-bar">
+      <!-- Mobile hamburger -->
+      <button class="sidebar-toggle" (click)="toggleSidebar()" aria-label="Toggle navigation">
+        <i class="bi" [class.bi-x-lg]="sidebarOpen" [class.bi-list]="!sidebarOpen"></i>
+      </button>
       <div class="search-bar">
         <i class="bi bi-search" style="color:#94a3b8"></i>
-        <input type="text" placeholder="Search pickups, opportunities..." />
+        <input type="text"
+               placeholder="Search pickups, opportunities..."
+               [(ngModel)]="searchQuery"
+               (input)="onSearchInput()"
+               (click)="$event.stopPropagation()" />
+        <!-- Search Results Dropdown -->
+        <div class="search-dropdown" *ngIf="showSearchResults" (click)="$event.stopPropagation()">
+          <div *ngIf="searchLoading" class="text-center py-3"><div class="spinner-border spinner-border-sm text-success"></div></div>
+          <div *ngIf="!searchLoading && searchResults.length === 0" class="text-center py-3 text-muted" style="font-size:0.85rem">No results found</div>
+          <div *ngFor="let r of searchResults"
+               class="search-result-item"
+               (click)="navigateToResult(r)">
+            <i class="bi {{ getResultIcon(r._type) }}" style="font-size:1rem;color:var(--wz-primary);flex-shrink:0"></i>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:0.85rem;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ getResultTitle(r) }}</div>
+              <div style="font-size:0.75rem;color:#94a3b8">{{ r._type | titlecase }} · {{ getResultSubtitle(r) }}</div>
+            </div>
+            <span *ngIf="r.status" class="badge bg-light text-dark" style="font-size:0.7rem">{{ r.status }}</span>
+          </div>
+        </div>
       </div>
       <div class="top-actions">
-        <button class="btn btn-link p-0" style="color:#64748b">
-          <i class="bi bi-bell" style="font-size:1.3rem"></i>
-        </button>
+        <!-- Notification Bell -->
+        <div style="position:relative" (click)="$event.stopPropagation()">
+          <button class="btn btn-link p-0 position-relative" style="color:#64748b" (click)="toggleNotifDropdown($event)">
+            <i class="bi bi-bell" style="font-size:1.3rem"></i>
+            <span *ngIf="unreadCount > 0"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style="font-size:0.6rem;min-width:16px;padding:2px 5px">
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+          </button>
+          <!-- Notification Dropdown -->
+          <div class="notif-dropdown" *ngIf="showNotifDropdown">
+            <div class="notif-header">
+              <span class="fw-bold" style="font-size:0.9rem">Notifications</span>
+              <button *ngIf="unreadCount > 0" class="btn btn-sm btn-link p-0 text-success" (click)="markAllRead()">Mark all read</button>
+            </div>
+            <div class="notif-list">
+              <div *ngIf="notifications.length === 0" class="text-center py-4 text-muted" style="font-size:0.85rem">
+                <i class="bi bi-bell-slash d-block fs-4 mb-2"></i>No notifications yet
+              </div>
+              <div *ngFor="let n of notifications"
+                   class="notif-item"
+                   [class.unread]="!n.isRead"
+                   (click)="markNotifRead(n)">
+                <div class="d-flex align-items-start gap-2">
+                  <i class="bi"
+                     [ngClass]="{'bi-check-circle text-success': n.type.includes('accepted'),
+                                 'bi-x-circle text-danger': n.type.includes('rejected'),
+                                 'bi-chat-dots text-primary': n.type.includes('chat'),
+                                 'bi-briefcase text-warning': n.type.includes('opportunity'),
+                                 'bi-file-earmark text-info': n.type.includes('application') && !n.type.includes('accepted') && !n.type.includes('rejected'),
+                                 'bi-bell text-secondary': !n.type.includes('accepted') && !n.type.includes('rejected') && !n.type.includes('chat') && !n.type.includes('opportunity') && !n.type.includes('application')}"
+                     style="font-size:1rem;margin-top:2px;flex-shrink:0"></i>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:0.825rem;font-weight:600;color:#1e293b">{{ n.title }}</div>
+                    <div style="font-size:0.775rem;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ n.message }}</div>
+                    <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px">{{ n.createdAt | date:'short' }}</div>
+                  </div>
+                  <span *ngIf="!n.isRead" style="width:8px;height:8px;border-radius:50%;background:var(--wz-primary);flex-shrink:0;margin-top:6px"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="d-flex align-items-center gap-2" style="cursor:pointer" routerLink="/profile">
           <div class="avatar" style="width:32px;height:32px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;">{{ initials }}</div>
-          <span style="font-size:0.875rem;font-weight:600;color:#374151">{{ user?.name }}</span>
+          <span class="topbar-user-name" style="font-size:0.875rem;font-weight:600;color:#374151">{{ user?.name }}</span>
           <i class="bi bi-chevron-down" style="font-size:0.75rem;color:#94a3b8"></i>
         </div>
       </div>
