@@ -1,4 +1,0 @@
-MONGO_URI=mongodb+srv://prince844121:chaman123@wastezero.gjbkhp1.mongodb.net/wastezero?retryWrites=true&w=majority&appName=WasteZero
-JWT_SECRET=ea92f4f1303eb60080c8be2af7731e73685efec076bee8e25936473e5e366ab7bf00016eb7012fa5a1c47efd3c153402c35dced41c4f4e74842ce78ffa8d64cd
-PORT=5000
-NODE_ENV=development

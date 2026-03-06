@@ -52,6 +52,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent),
       },
       {
+        path: 'help-support',
+        loadComponent: () => import('./components/help-support/help-support.component').then(m => m.HelpSupportComponent),
+      },
+      {
         path: 'my-impact',
         canActivate: [authGuard],
         data: { roles: ['user'] },

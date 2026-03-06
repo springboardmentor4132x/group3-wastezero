@@ -66,6 +66,14 @@ export class AuthService {
     this.setUser(updated as User);
   }
 
+  requestPasswordReset(payload: { email: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/auth/forgot-password`, payload);
+  }
+
+  resetPassword(payload: { email: string; otp: string; newPassword: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/auth/reset-password`, payload);
+  }
+
   private setUser(user: User): void {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('wz_user', JSON.stringify(user));

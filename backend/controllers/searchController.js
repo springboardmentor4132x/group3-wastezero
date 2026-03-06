@@ -104,12 +104,17 @@ async function universalSearch(req, res) {
       );
     }
 
-    // ── Users (admin only) ───────────────────────────────────────────────
-    if ((type === 'all' || type === 'users') && role === 'admin') {
+    // ── Users ─────────────────────────────────────────────────────────────
+    // Previously restricted to admins only; now all authenticated roles can
+    // search by user name/email/username. This is used by the in‑app
+    // messaging screen to start chats by username.
+    if (type === 'all' || type === 'users') {
+      const userFilter = {
+        $or: [{ name: regex }, { email: regex }, { username: regex }],
+      };
+
       promises.push(
-        User.find({
-          $or: [{ name: regex }, { email: regex }, { username: regex }],
-        })
+        User.find(userFilter)
           .select('name email username role createdAt')
           .limit(limit)
           .lean()

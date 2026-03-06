@@ -5,6 +5,7 @@ import { MessageService } from '../../services/message.service';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { SocketService } from '../../services/socket.service';
+import { SearchService, SearchResult } from '../../services/search.service';
 import { Message, User } from '../../models/models';
 import { Subscription } from 'rxjs';
 
@@ -28,6 +29,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   newConvUserId = '';
   showNewConv = false;
 
+  // User search for starting new chats
+  userSearchTerm = '';
+  userSearchResults: SearchResult[] = [];
+  userSearchLoading = false;
+
   // Typing indicator
   typingUser: string | null = null;
   private typingTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -41,6 +47,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private userService: UserService,
     private socketService: SocketService,
+    private searchService: SearchService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -170,6 +177,58 @@ export class MessagesComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── User search (start chat by username) ─────────────────────────────────
+  onUserSearchInput() {
+    const term = this.userSearchTerm.trim();
+    if (term.length < 2) {
+      this.userSearchResults = [];
+      this.userSearchLoading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.userSearchLoading = true;
+    this.searchService.search(term, 'users', 10).subscribe({
+      next: (res) => {
+        this.userSearchResults = (res.results || []).filter(r => r._type === 'user');
+        this.userSearchLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.userSearchLoading = false;
+        this.userSearchResults = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  startChatWithUser(user: SearchResult) {
+    if (!user?._id) return;
+    const partner = {
+      _id: user._id,
+      name: user.name || user.title || 'Unknown user',
+      role: user.role || 'user',
+    };
+
+    const existing = this.conversations.find((c: any) => c?.partner?._id === partner._id);
+
+    if (existing) {
+      this.selectConversation(existing);
+    } else {
+      const tempConv = {
+        partner,
+        lastMessage: { content: '' },
+        unreadCount: 0,
+      };
+      this.conversations = [tempConv, ...this.conversations];
+      this.selectConversation(tempConv);
+    }
+
+    this.userSearchTerm = '';
+    this.userSearchResults = [];
+    this.cdr.markForCheck();
+  }
+
   isMine(msg: Message): boolean {
     const sid = typeof msg.sender_id === 'object' ? (msg.sender_id as any)._id : msg.sender_id;
     return sid === this.auth.currentUser?._id;
@@ -180,11 +239,25 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   get myInitials(): string {
-    return this.auth.currentUser?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
+    return (
+      this.auth.currentUser?.name
+        ?.split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'U'
+    );
   }
 
   partnerInitials(name: string): string {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+    return (
+      name
+        ?.split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || '?'
+    );
   }
 
   trackById(_: number, item: any): string { return item?._id || item?.id || _; }

@@ -1,0 +1,18 @@
+TASKS:
+
+Email nofication after registration
+forget password
+Search user in Messaging Feature
+Dark Mode
+Help & Support Page
+
+PWA
+Push nofication on PWA
+cloudinary for image.
+
+
+User-created pickups will be directly visible to volunteers, and they can accept them from the Opportunities tab.
+
+Additionally, the Admin/NGO can also create opportunities, which will appear on the Opportunities page, where volunteers can apply. These applications will then be reviewed and accepted by the Admin.
+
+Also, can we allow two or more volunteers to be accepted for the same opportunity created by the Admin? Since the opportunity is created by the Admin, it should be assigned likewise the pickup after the admin accepts the volunteer’s application from the Admin Dashboard.
