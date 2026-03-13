@@ -12,10 +12,14 @@ import {
   ChangeDetectionStrategy,
   signal,
   computed,
+  HostListener,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/models';
+import { Subscription } from 'rxjs';
 
 interface PickupRequest {
   id: number;
@@ -58,11 +62,28 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   private observers: IntersectionObserver[] = [];
   private counterAnimated = new Set<Element>();
   private reducedMotion = false;
+  private authSub?: Subscription;
 
   // Navbar
   isLoggedIn = signal(false);
   mobileMenuOpen = signal(false);
   navScrolled = signal(false);
+  user = signal<User | null>(null);
+  showProfileDropdown = signal(false);
+
+  initials = computed(() => {
+    const u = this.user();
+    if (!u?.name) return 'U';
+    return (
+      u.name
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'U'
+    );
+  });
 
   // Stats
   stats = [
@@ -150,6 +171,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     @Inject(PLATFORM_ID) platformId: object,
     private el: ElementRef,
     private router: Router,
+    private auth: AuthService,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -157,9 +179,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     if (this.isBrowser) {
       this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      // Check if user is logged in
-      const token = localStorage.getItem('token');
-      this.isLoggedIn.set(!!token);
+      // Initialize auth state
+      this.user.set(this.auth.currentUser);
+      this.isLoggedIn.set(this.auth.isLoggedIn);
+
+      this.authSub = this.auth.currentUser$.subscribe((u) => {
+        this.user.set(u);
+        this.isLoggedIn.set(!!u);
+      });
     }
   }
 
@@ -174,6 +201,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.observers.forEach(obs => obs.disconnect());
+    this.authSub?.unsubscribe();
   }
 
   // ─── Navbar ────────────────────────────────────────
@@ -211,6 +239,24 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  logout(): void {
+    this.auth.logout();
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showProfileDropdown.update((v) => !v);
+  }
+
+  @HostListener('document:click')
+  closeDropdowns(): void {
+    this.showProfileDropdown.set(false);
   }
 
   // ─── Scroll Reveal ─────────────────────────────────

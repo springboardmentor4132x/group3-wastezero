@@ -17,8 +17,18 @@ export class OpportunityService {
     requiredSkills: string[];
     duration: string;
     location: string;
+    imageFile?: File | null;
   }): Observable<Opportunity> {
-    return this.http.post<Opportunity>(this.apiUrl, data);
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('description', data.description);
+    formData.append('duration', data.duration);
+    formData.append('location', data.location);
+    formData.append('requiredSkills', JSON.stringify(data.requiredSkills));
+    if (data.imageFile) {
+      formData.append('image', data.imageFile);
+    }
+    return this.http.post<Opportunity>(this.apiUrl, formData);
   }
 
   /** List opportunities with optional filters (role-aware on backend) */
@@ -48,8 +58,26 @@ export class OpportunityService {
   }
 
   /** Update opportunity (admin owner only) */
-  update(id: string, data: Partial<Opportunity>): Observable<Opportunity> {
-    return this.http.put<Opportunity>(`${this.apiUrl}/${id}`, data);
+  update(id: string, data: {
+    title: string;
+    description: string;
+    requiredSkills: string[];
+    duration: string;
+    location: string;
+    status: 'open' | 'in-progress' | 'closed';
+    imageFile?: File | null;
+  }): Observable<Opportunity> {
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('description', data.description);
+    formData.append('duration', data.duration);
+    formData.append('location', data.location);
+    formData.append('status', data.status);
+    formData.append('requiredSkills', JSON.stringify(data.requiredSkills));
+    if (data.imageFile) {
+      formData.append('image', data.imageFile);
+    }
+    return this.http.put<Opportunity>(`${this.apiUrl}/${id}`, formData);
   }
 
   /** Soft-delete opportunity (admin owner only) */

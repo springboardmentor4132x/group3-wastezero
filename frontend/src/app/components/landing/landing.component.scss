@@ -207,6 +207,143 @@ $tablet-bp: 1024px;
   flex-shrink: 0;
 }
 
+.nav-profile-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-icon-btn {
+  position: relative;
+  border: none;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  color: $slate-600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 1.25rem;
+  }
+
+  &:hover {
+    color: $slate-800;
+  }
+}
+
+.nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: $red-700;
+  border: 2px solid #fff;
+}
+
+.nav-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: $radius-full;
+  background: $slate-50;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+
+  &:hover {
+    background: #fff;
+    border-color: $slate-200;
+    box-shadow: $shadow-sm;
+  }
+}
+
+.nav-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: $green-700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.nav-username {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $slate-800;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-chevron {
+  font-size: 0.7rem;
+  color: $slate-400;
+}
+
+.nav-profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 110%;
+  min-width: 180px;
+  background: #fff;
+  border-radius: $radius-md;
+  box-shadow: $shadow-lg;
+  padding: 6px;
+  border: 1px solid $slate-100;
+  z-index: 1200;
+
+  hr {
+    margin: 4px 0;
+    border: none;
+    border-top: 1px solid $slate-100;
+  }
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: $slate-700;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  text-align: left;
+
+  i {
+    font-size: 0.9rem;
+    color: $slate-500;
+  }
+
+  &:hover {
+    background: $slate-50;
+  }
+
+  &.danger {
+    color: $red-700;
+
+    i {
+      color: $red-700;
+    }
+  }
+}
+
 .btn-nav-outline {
   padding: 8px 18px;
   border: 1.5px solid $slate-200;

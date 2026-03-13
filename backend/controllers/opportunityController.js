@@ -4,6 +4,9 @@ const User = require('../models/User');
 const AdminLog = require('../models/AdminLog');
 const { emitToUser, emitToRoom } = require('../socket');
 const { createNotification } = require('./notificationController');
+const cloudinary = require('../config/cloudinary');
+const fs = require('fs');
+const path = require('path');
 
 // ── Helper: standard error response ───────────────────────────────────────
 const errorResponse = (res, status, message, details = null) => {
@@ -15,7 +18,19 @@ const errorResponse = (res, status, message, details = null) => {
 // ── POST   Create opportunity (admin only) ────────────────────────────────
 exports.createOpportunity = async (req, res) => {
   try {
-    const { title, description, requiredSkills, duration, location } = req.body;
+    let { title, description, requiredSkills, duration, location } = req.body;
+
+    // Handle requiredSkills coming from multipart/form-data (string)
+    if (typeof requiredSkills === 'string') {
+      try {
+        requiredSkills = JSON.parse(requiredSkills);
+      } catch {
+        requiredSkills = requiredSkills
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    }
 
     // Validate required fields
     const errors = [];
@@ -34,6 +49,23 @@ exports.createOpportunity = async (req, res) => {
     if (cleanSkills.length === 0)
       return errorResponse(res, 400, 'At least one non-empty skill is required');
 
+    let imageUrl = null;
+    let imagePublicId = null;
+
+    // If an image file is provided, upload to Cloudinary
+    if (req.file) {
+      const uploadPath = path.resolve(req.file.path);
+      try {
+        const result = await cloudinary.uploader.upload(uploadPath, {
+          folder: 'wastezero/opportunities',
+        });
+        imageUrl = result.secure_url;
+        imagePublicId = result.public_id;
+      } finally {
+        fs.unlink(uploadPath, () => {});
+      }
+    }
+
     const opportunity = await Opportunity.create({
       title: title.trim(),
       description: description.trim(),
@@ -42,6 +74,8 @@ exports.createOpportunity = async (req, res) => {
       location: location.trim(),
       status: 'open',
       ngo_id: req.user._id,
+      imageUrl,
+      imagePublicId,
     });
 
     await AdminLog.create({
@@ -173,7 +207,19 @@ exports.updateOpportunity = async (req, res) => {
     }
 
     // Validate editable fields
-    const { title, description, requiredSkills, duration, location, status } = req.body;
+    let { title, description, requiredSkills, duration, location, status } = req.body;
+
+    // Handle requiredSkills from multipart/form-data
+    if (requiredSkills !== undefined && typeof requiredSkills === 'string') {
+      try {
+        requiredSkills = JSON.parse(requiredSkills);
+      } catch {
+        requiredSkills = requiredSkills
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    }
     const errors = [];
     if (title !== undefined && (!title || !title.trim())) errors.push('Title cannot be empty');
     if (description !== undefined && (!description || !description.trim()))
@@ -202,6 +248,29 @@ exports.updateOpportunity = async (req, res) => {
     if (duration) updateFields.duration = duration.trim();
     if (location) updateFields.location = location.trim();
     if (status) updateFields.status = status;
+
+    // Handle image replacement
+    if (req.file) {
+      const uploadPath = path.resolve(req.file.path);
+      try {
+        // Delete old image if exists
+        if (opp.imagePublicId) {
+          try {
+            await cloudinary.uploader.destroy(opp.imagePublicId);
+          } catch (e) {
+            console.error('Cloudinary destroy error:', e.message);
+          }
+        }
+
+        const result = await cloudinary.uploader.upload(uploadPath, {
+          folder: 'wastezero/opportunities',
+        });
+        updateFields.imageUrl = result.secure_url;
+        updateFields.imagePublicId = result.public_id;
+      } finally {
+        fs.unlink(uploadPath, () => {});
+      }
+    }
 
     const updated = await Opportunity.findByIdAndUpdate(
       req.params.id,

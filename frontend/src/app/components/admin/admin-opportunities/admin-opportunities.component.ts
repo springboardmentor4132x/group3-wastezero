@@ -35,6 +35,10 @@ export class AdminOpportunitiesComponent implements OnInit, OnDestroy {
   saving = false;
   editingId: string | null = null;
 
+  // ── Image upload ──
+  imageFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+
   // ── Skill input helper ──
   newSkill = '';
 
@@ -114,6 +118,8 @@ export class AdminOpportunitiesComponent implements OnInit, OnDestroy {
     this.form = this.emptyForm();
     this.editingId = null;
     this.formErrors = [];
+    this.imageFile = null;
+    this.imagePreviewUrl = null;
     this.activeTab = 'create';
   }
 
@@ -126,8 +132,11 @@ export class AdminOpportunitiesComponent implements OnInit, OnDestroy {
       duration: opp.duration,
       location: opp.location,
       status: opp.status,
+      imageUrl: opp.imageUrl || null,
     };
     this.formErrors = [];
+    this.imageFile = null;
+    this.imagePreviewUrl = null;
     this.activeTab = 'edit';
   }
 
@@ -141,7 +150,18 @@ export class AdminOpportunitiesComponent implements OnInit, OnDestroy {
     if (this.formErrors.length) return;
 
     this.saving = true;
-    const payload = { ...this.form };
+    const payload: any = {
+      title: this.form.title.trim(),
+      description: this.form.description.trim(),
+      requiredSkills: this.form.requiredSkills,
+      duration: this.form.duration.trim(),
+      location: this.form.location.trim(),
+      imageFile: this.imageFile,
+    };
+
+    if (this.editingId) {
+      payload.status = this.form.status;
+    }
 
     const obs$ = this.editingId
       ? this.oppService.update(this.editingId, payload)
@@ -265,6 +285,8 @@ export class AdminOpportunitiesComponent implements OnInit, OnDestroy {
     this.activeTab = 'list';
     this.editingId = null;
     this.selectedOppForApps = null;
+    this.imageFile = null;
+    this.imagePreviewUrl = null;
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────
@@ -277,7 +299,22 @@ export class AdminOpportunitiesComponent implements OnInit, OnDestroy {
       duration: '',
       location: '',
       status: 'open' as 'open' | 'in-progress' | 'closed',
+      imageUrl: null as string | null,
     };
+  }
+
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files.length) return;
+    const file = input.files[0];
+    this.imageFile = file;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imagePreviewUrl = reader.result as string;
+      this.cdr.markForCheck();
+    };
+    reader.readAsDataURL(file);
   }
 
   statusBadgeClass(status: string): string {

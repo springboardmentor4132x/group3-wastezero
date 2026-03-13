@@ -47,7 +47,12 @@
 
   <div class="row g-3" *ngIf="!loading && opportunities.length">
     <div class="col-md-6 col-lg-4" *ngFor="let opp of opportunities; trackBy: trackById">
-      <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
+      <div class="card-wz h-100" style="border:1.5px solid #e2e8f0;padding:16px 16px 18px;">
+        <img *ngIf="opp.imageUrl"
+             [src]="opp.imageUrl"
+             alt="{{ opp.title }}"
+             class="img-fluid rounded mb-2"
+             style="height:210px;width:100%;object-fit:cover;">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="badge text-white px-2 py-1" [ngClass]="statusBadgeClass(opp.status)"
                 style="font-size:0.75rem;border-radius:6px">{{ opp.status | titlecase }}</span>
@@ -142,6 +147,20 @@
             <input type="text" [(ngModel)]="form.location" placeholder="City or area" />
           </div>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label>Opportunity Image (optional)</label>
+        <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+        <small class="text-muted">This image will appear on the opportunity cards.</small>
+      </div>
+
+      <div *ngIf="imagePreviewUrl || form.imageUrl" class="mt-2">
+        <label class="form-label" style="font-size:0.85rem">Preview</label>
+        <img [src]="imagePreviewUrl || form.imageUrl"
+             alt="Opportunity preview"
+             class="img-fluid rounded"
+             style="max-height:180px;object-fit:cover;width:100%">
       </div>
 
       <div *ngIf="editingId" class="form-group">

@@ -79,6 +79,7 @@ export interface Opportunity {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+  imageUrl?: string;
 }
 
 export interface OpportunityPage {

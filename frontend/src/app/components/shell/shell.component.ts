@@ -22,6 +22,9 @@ export class ShellComponent implements OnInit, OnDestroy {
   darkMode = false;
   sidebarOpen = false;
 
+  // Profile dropdown
+  showProfileDropdown = false;
+
   // Notifications
   notifications: Notification[] = [];
   unreadCount = 0;
@@ -217,6 +220,25 @@ export class ShellComponent implements OnInit, OnDestroy {
   onDocumentClick(event: Event) {
     this.showNotifDropdown = false;
     this.showSearchResults = false;
+     this.showProfileDropdown = false;
     this.cdr.markForCheck();
+  }
+
+  toggleProfileDropdown(event: Event) {
+    event.stopPropagation();
+    this.showProfileDropdown = !this.showProfileDropdown;
+    this.showNotifDropdown = false;
+    this.showSearchResults = false;
+    this.cdr.markForCheck();
+  }
+
+  goToDashboard() {
+    this.router.navigate(['/dashboard']);
+    this.showProfileDropdown = false;
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
+    this.showProfileDropdown = false;
   }
 }

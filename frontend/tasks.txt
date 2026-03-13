@@ -8,7 +8,11 @@ Help & Support Page
 
 PWA
 Push nofication on PWA
+
 cloudinary for image.
+profile on home page
+Rate Limiting.
+node cache - 80% faster api
 
 
 User-created pickups will be directly visible to volunteers, and they can accept them from the Opportunities tab.

@@ -39,7 +39,12 @@
 
 <div class="row g-3" *ngIf="!loading && opportunities.length">
   <div class="col-md-6 col-lg-4" *ngFor="let opp of opportunities; trackBy: trackById">
-    <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
+    <div class="card-wz h-100" style="border:1.5px solid #e2e8f0;padding:10px 12px 10px;">
+      <img *ngIf="opp.imageUrl"
+           [src]="opp.imageUrl"
+           alt="{{ opp.title }}"
+           class="img-fluid rounded mb-2"
+           style="height:210px;width:100%;object-fit:cover;">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="badge bg-success text-white px-2 py-1" style="font-size:0.75rem;border-radius:6px">{{ opp.status | titlecase }}</span>
         <small class="text-muted">{{ opp.createdAt | date:'mediumDate' }}</small>

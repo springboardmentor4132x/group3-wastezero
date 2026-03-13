@@ -31,6 +31,14 @@ const opportunitySchema = new mongoose.Schema({
     required: [true, 'Location is required'],
     trim: true,
   },
+  imageUrl: {
+    type: String,
+    default: null,
+  },
+  imagePublicId: {
+    type: String,
+    default: null,
+  },
   status: {
     type: String,
     enum: ['open', 'in-progress', 'closed'],

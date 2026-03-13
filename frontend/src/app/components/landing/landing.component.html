@@ -22,9 +22,44 @@
 
     <div class="nav-actions">
       @if (isLoggedIn()) {
-        <button class="btn-nav-primary" (click)="goToDashboard()" id="nav-dashboard-btn">
-          <i class="bi bi-grid-1x2" aria-hidden="true"></i> Dashboard
-        </button>
+        <div class="nav-profile-wrap">
+          <!-- <button class="nav-icon-btn" aria-label="Notifications">
+            <i class="bi bi-bell" aria-hidden="true"></i>
+            <span class="nav-badge"></span>
+          </button> -->
+
+          <div class="nav-profile" (click)="toggleProfileDropdown($event)">
+            <div class="nav-avatar">
+              {{ initials() }}
+            </div>
+            <span class="nav-username">
+              {{ user()?.name }}
+            </span>
+            <i class="bi bi-chevron-down nav-chevron" aria-hidden="true"></i>
+
+            @if (showProfileDropdown()) {
+              <div class="nav-profile-dropdown" role="menu">
+                <button class="dropdown-item" type="button" (click)="goToDashboard()">
+                  <i class="bi bi-speedometer2"></i>
+                  <span>Dashboard</span>
+                </button>
+                <button class="dropdown-item" type="button" (click)="goToProfile()">
+                  <i class="bi bi-person-circle"></i>
+                  <span>My Profile</span>
+                </button>
+                <hr>
+                <button class="dropdown-item danger" type="button" (click)="logout()">
+                  <i class="bi bi-box-arrow-right"></i>
+                  <span>Logout</span>
+                </button>
+              </div>
+            }
+          </div>
+
+          <button class="btn-nav-primary" (click)="goToDashboard()" id="nav-dashboard-btn">
+            <i class="bi bi-grid-1x2" aria-hidden="true"></i> Dashboard
+          </button>
+        </div>
       } @else {
         <button class="btn-nav-outline" (click)="goToLogin()" id="nav-login-btn">Log In</button>
         <button class="btn-nav-primary" (click)="goToLogin()" id="nav-get-started-btn">Get Started</button>
