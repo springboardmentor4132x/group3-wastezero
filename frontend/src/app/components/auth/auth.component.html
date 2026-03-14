@@ -1,0 +1,151 @@
+<div class="auth-page">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <i class="bi bi-recycle"></i>
+      WasteZero
+    </div>
+    <h1 class="auth-title">Join the Recycling Revolution</h1>
+    <p class="auth-desc">
+      WasteZero connects volunteers, NGOs, and administrators to schedule pickups,
+      manage recycling opportunities, and make a positive impact on our environment.
+    </p>
+    <div class="auth-features">
+      <div class="feature">
+        <i class="bi bi-calendar-check" style="font-size:1.5rem"></i>
+        <div>
+          <h4>Schedule Pickups</h4>
+          <p>Easily arrange waste collection at your convenience.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <i class="bi bi-bar-chart" style="font-size:1.5rem"></i>
+        <div>
+          <h4>Track Impact</h4>
+          <p>Monitor your environmental contribution over time.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <i class="bi bi-people" style="font-size:1.5rem"></i>
+        <div>
+          <h4>Volunteer</h4>
+          <p>Join recycling initiatives and help your community.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="form-tabs" *ngIf="activeTab !== 'verify'">
+      <button [class.active]="activeTab === 'login'" (click)="switchTab('login')">Login</button>
+      <button [class.active]="activeTab === 'register'" (click)="switchTab('register')">Register</button>
+    </div>
+
+    <div *ngIf="activeTab === 'login'">
+      <h2 class="form-title">Login to your account</h2>
+      <p class="form-subtitle">Enter your credentials to access your account</p>
+      <div *ngIf="errorMsg" class="alert-wz error">{{ errorMsg }}</div>
+      <form (ngSubmit)="onLogin()" class="form-wz">
+        <div class="form-group">
+          <label>Username / Email</label>
+          <input type="text" [(ngModel)]="loginForm.username" name="username" placeholder="Your username or email" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" [(ngModel)]="loginForm.password" name="password" placeholder="Your password" />
+        </div>
+        <button type="submit" class="btn-wz-primary w-100" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Login
+        </button>
+      </form>
+    </div>
+
+    <div *ngIf="activeTab === 'register'">
+      <h2 class="form-title">Create a new account</h2>
+      <p class="form-subtitle">Fill in your details to join WasteZero</p>
+      <div *ngIf="errorMsg" class="alert-wz error">{{ errorMsg }}</div>
+      <div *ngIf="successMsg" class="alert-wz success">{{ successMsg }}</div>
+      <form (ngSubmit)="onRegister()" class="form-wz">
+        <div class="row g-2">
+          <div class="col-6 form-group">
+            <label>Full Name <span class="text-danger">*</span></label>
+            <input type="text" [(ngModel)]="registerForm.name" name="name" placeholder="Your full name" />
+          </div>
+          <div class="col-6 form-group">
+            <label>Email <span class="text-danger">*</span></label>
+            <input type="email" [(ngModel)]="registerForm.email" name="email" placeholder="Your email" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Username <span class="text-danger">*</span></label>
+          <input type="text" [(ngModel)]="registerForm.username" name="username" placeholder="Choose a username" />
+        </div>
+       <div class="row g-2">
+          <div class="col-6 form-group">
+            <label>Password <span class="text-danger">*</span></label>
+            <input type="password" [(ngModel)]="registerForm.password" name="password" placeholder="Create a password" />
+            <small style="font-size: 0.75rem; color: #6c757d;">
+              Must contain 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
+            </small>
+          </div>
+          <div class="col-6 form-group">
+            <label>Confirm Password <span class="text-danger">*</span></label>
+            <input type="password" [(ngModel)]="registerForm.confirmPassword" name="confirmPassword" placeholder="Confirm your password" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select [(ngModel)]="registerForm.role" name="role">
+            <option value="user">User (Citizen)</option>
+            <option value="volunteer">Volunteer (Pickup Agent)</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" [(ngModel)]="registerForm.location" name="location" placeholder="Your city / area" />
+        </div>
+        <div class="form-group">
+          <label>Skills (comma-separated)</label>
+          <input type="text" [(ngModel)]="registerForm.skills" name="skills" placeholder="e.g. driving, teamwork, etc." />
+        </div>
+        <button type="submit" class="btn-wz-primary w-100" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Create Account
+        </button>
+      </form>
+    </div>
+
+    <div *ngIf="activeTab === 'verify'">
+      <h2 class="form-title">Verify Your Account</h2>
+      <p class="form-subtitle">We sent a 6-digit secure code to <strong>{{ verifyForm.email }}</strong></p>
+      
+      <div *ngIf="errorMsg" class="alert-wz error">{{ errorMsg }}</div>
+      <div *ngIf="successMsg" class="alert-wz success">{{ successMsg }}</div>
+      
+      <form (ngSubmit)="onVerify()" class="form-wz mt-4">
+        <div class="form-group text-center">
+          <label>Enter Verification Code <span class="text-danger">*</span></label>
+          <input 
+            type="text" 
+            [(ngModel)]="verifyForm.otp" 
+            name="otp" 
+            placeholder="• • • • • •" 
+            maxlength="6"
+            style="font-size: 24px; text-align: center; letter-spacing: 8px; font-weight: bold; padding: 10px;" 
+          />
+        </div>
+        <button type="submit" class="btn-wz-primary w-100 mt-3" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Verify & Access Dashboard
+        </button>
+        <div class="text-center mt-3">
+          <button type="button" class="btn btn-link text-muted" (click)="switchTab('login')" style="font-size: 0.85rem; text-decoration: none;">
+            ← Back to Login
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>

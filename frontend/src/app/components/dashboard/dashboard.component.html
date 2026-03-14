@@ -1,0 +1,283 @@
+<div *ngIf="loading" class="d-flex justify-content-center py-5">
+  <div class="spinner-border text-success"></div>
+</div>
+
+<ng-container *ngIf="!loading">
+
+  <!-- ===== USER DASHBOARD ===== -->
+  <ng-container *ngIf="user?.role === 'user'">
+    <div class="page-header">
+      <h2>Welcome back, {{ user?.name }}! 👋</h2>
+      <p>Here's your waste management overview</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-3 col-6">
+        <div class="stat-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h3>{{ stats.total || 0 }}</h3>
+              <p>Total Pickups</p>
+            </div>
+            <i class="bi bi-truck stat-icon text-success"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="stat-card accent">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h3>{{ stats.completed || 0 }}</h3>
+              <p>Completed</p>
+            </div>
+            <i class="bi bi-check-circle stat-icon" style="color:var(--wz-accent)"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="stat-card warning">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h3>{{ stats.pending || 0 }}</h3>
+              <p>Pending</p>
+            </div>
+            <i class="bi bi-clock stat-icon" style="color:#ff9800"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="stat-card info">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h3>{{ (stats.total || 0) - (stats.pending || 0) - (stats.completed || 0) }}</h3>
+              <p>In Progress</p>
+            </div>
+            <i class="bi bi-arrow-repeat stat-icon" style="color:#3f51b5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card-wz mb-4">
+      <div class="card-wz-header"><h5>Quick Actions</h5></div>
+      <div class="d-flex flex-wrap gap-3">
+        <a routerLink="/schedule-pickup" class="btn-wz-primary"><i class="bi bi-calendar-plus"></i> Schedule Pickup</a>
+        <a routerLink="/my-pickups" class="btn-wz-outline"><i class="bi bi-clock-history"></i> View History</a>
+        <a routerLink="/messages" class="btn-wz-outline"><i class="bi bi-chat-dots"></i> Messages</a>
+        <a routerLink="/profile" class="btn-wz-outline"><i class="bi bi-person"></i> My Profile</a>
+      </div>
+    </div>
+
+    <!-- Waste Stats -->
+    <div class="card-wz mb-4" *ngIf="wasteStatsArray.length">
+      <div class="card-wz-header"><h5>My Waste Recycled</h5></div>
+      <div class="d-flex flex-wrap gap-3">
+        <div *ngFor="let w of wasteStatsArray; trackBy: trackById" class="text-center p-3 rounded" style="background:#f8fafc;min-width:90px">
+          <i class="bi {{ w.icon }} fs-4"></i>
+          <div class="fw-bold mt-1">{{ w.count }}</div>
+          <div class="waste-tag {{ w.css }} mt-1">{{ w.label }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Pickups -->
+    <div class="card-wz">
+      <div class="card-wz-header">
+        <h5>Recent Pickups</h5>
+        <a routerLink="/my-pickups" style="font-size:0.85rem;color:var(--wz-primary)">View all</a>
+      </div>
+      <div *ngIf="!recentPickups.length" class="text-center py-4 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        No pickups yet. <a routerLink="/schedule-pickup">Schedule your first pickup</a>
+      </div>
+      <div class="table-responsive" *ngIf="recentPickups.length">
+        <table class="table-wz w-100">
+          <thead><tr><th>Title</th><th>Waste Type</th><th>Date</th><th>Status</th><th>Volunteer</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let p of recentPickups; trackBy: trackById">
+              <td>{{ p.title }}</td>
+              <td><span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span></td>
+              <td>{{ p.preferredDate | date:'mediumDate' }}</td>
+              <td><span class="badge-{{p.status.toLowerCase()}}">{{ p.status }}</span></td>
+              <td>{{ getVolunteerOf(p) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ===== VOLUNTEER DASHBOARD ===== -->
+  <ng-container *ngIf="user?.role === 'volunteer'">
+    <div class="page-header">
+      <h2>Welcome, {{ user?.name }}! 🙌</h2>
+      <p>Pickup opportunities waiting for you</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4 col-6">
+        <div class="stat-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><h3>{{ stats.available || 0 }}</h3><p>Available Pickups</p></div>
+            <i class="bi bi-search stat-icon text-success"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="stat-card warning">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><h3>{{ stats.accepted || 0 }}</h3><p>Accepted</p></div>
+            <i class="bi bi-truck stat-icon" style="color:#ff9800"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="stat-card accent">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><h3>{{ stats.completed || 0 }}</h3><p>Completed</p></div>
+            <i class="bi bi-check-circle stat-icon" style="color:var(--wz-accent)"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card-wz mb-4">
+      <div class="card-wz-header"><h5>Quick Actions</h5></div>
+      <div class="d-flex flex-wrap gap-3">
+        <a routerLink="/opportunities" class="btn-wz-primary"><i class="bi bi-search"></i> View Opportunities</a>
+        <a routerLink="/my-pickups" class="btn-wz-outline"><i class="bi bi-list-check"></i> My Assigned Pickups</a>
+        <a routerLink="/messages" class="btn-wz-outline"><i class="bi bi-chat-dots"></i> Messages</a>
+      </div>
+    </div>
+
+    <!-- Recent assigned pickups -->
+    <div class="card-wz">
+      <div class="card-wz-header">
+        <h5>My Assigned Pickups</h5>
+        <a routerLink="/my-pickups" style="font-size:0.85rem;color:var(--wz-primary)">View all</a>
+      </div>
+      <div *ngIf="!recentPickups.length" class="text-center py-4 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        No pickups assigned yet. <a routerLink="/opportunities">Browse opportunities</a>
+      </div>
+      <div class="table-responsive" *ngIf="recentPickups.length">
+        <table class="table-wz w-100">
+          <thead><tr><th>Title</th><th>Waste Type</th><th>Location</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let p of recentPickups; trackBy: trackById">
+              <td>{{ p.title }}</td>
+              <td><span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span></td>
+              <td>{{ p.address }}</td>
+              <td>{{ p.preferredDate | date:'mediumDate' }}</td>
+              <td><span class="badge-{{p.status.toLowerCase()}}">{{ p.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ===== ADMIN DASHBOARD ===== -->
+  <ng-container *ngIf="user?.role === 'admin'">
+    <div class="page-header">
+      <h2>Admin Dashboard</h2>
+      <p>Platform overview and management center</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-2 col-6">
+        <div class="stat-card">
+          <h3>{{ stats.totalUsers || 0 }}</h3>
+          <p>Users</p>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="stat-card accent">
+          <h3>{{ stats.totalVolunteers || 0 }}</h3>
+          <p>Volunteers</p>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="stat-card info">
+          <h3>{{ stats.totalPickups || 0 }}</h3>
+          <p>Total Pickups</p>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="stat-card">
+          <h3>{{ stats.completedPickups || 0 }}</h3>
+          <p>Completed</p>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="stat-card warning">
+          <h3>{{ stats.pendingPickups || 0 }}</h3>
+          <p>Pending</p>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="stat-card danger">
+          <h3>{{ stats.cancelledPickups || 0 }}</h3>
+          <p>Cancelled</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waste by type -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card-wz h-100">
+          <div class="card-wz-header"><h5>Waste Collected by Type</h5></div>
+          <div *ngIf="!stats.wasteByType?.length" class="text-muted text-center py-4">No data yet</div>
+          <div *ngFor="let w of stats.wasteByType; trackBy: trackById" class="mb-2">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="waste-tag waste-{{w._id}}">{{ w._id }}</span>
+              <span class="fw-bold">{{ w.count }}</span>
+            </div>
+            <div class="progress" style="height:6px">
+              <div class="progress-bar bg-success" [style.width.%]="(w.count / (stats.completedPickups || 1)) * 100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card-wz h-100">
+          <div class="card-wz-header"><h5>Recent Activity</h5></div>
+          <div *ngFor="let log of stats.recentActivity; trackBy: trackById" class="d-flex align-items-start gap-2 mb-2 pb-2" style="border-bottom:1px solid #f1f5f9">
+            <i class="bi bi-activity text-success mt-1"></i>
+            <div>
+              <div style="font-size:0.85rem">{{ log.details }}</div>
+              <div style="font-size:0.75rem;color:#94a3b8">{{ log.timestamp | date:'short' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent pickups -->
+    <div class="card-wz">
+      <div class="card-wz-header">
+        <h5>Recent Pickups</h5>
+        <a routerLink="/admin/pickups" style="font-size:0.85rem;color:var(--wz-primary)">View all</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table-wz w-100">
+          <thead><tr><th>Title</th><th>User</th><th>Waste Type</th><th>Date</th><th>Status</th><th>Volunteer</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let p of recentPickups; trackBy: trackById">
+              <td>{{ p.title }}</td>
+              <td>{{ getUserOf(p) }}</td>
+              <td><span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span></td>
+              <td>{{ p.preferredDate | date:'mediumDate' }}</td>
+              <td><span class="badge-{{p.status.toLowerCase()}}">{{ p.status }}</span></td>
+              <td>{{ getVolunteerOf(p) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+</ng-container>

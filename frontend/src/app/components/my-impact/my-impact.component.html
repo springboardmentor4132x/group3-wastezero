@@ -1,0 +1,119 @@
+<div class="page-header">
+  <h2>My Impact</h2>
+  <p>Track your environmental contribution and recycling statistics</p>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<ng-container *ngIf="!loading">
+  <!-- Summary cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="stat-card">
+        <h3>{{ stats.total || 0 }}</h3>
+        <p>Total Pickups</p>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card accent">
+        <h3>{{ stats.completed || 0 }}</h3>
+        <p>Completed</p>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card warning">
+        <h3>{{ totalWaste }}</h3>
+        <p>Total Waste Units</p>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card info">
+        <h3>{{ impactScore }}</h3>
+        <p>Impact Score</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waste breakdown -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card-wz">
+        <div class="card-wz-header"><h5>Waste by Category</h5></div>
+        <div *ngIf="totalWaste === 0" class="text-center py-4 text-muted">
+          <i class="bi bi-bar-chart fs-1 d-block mb-2"></i>
+          Complete pickups to see your waste statistics
+        </div>
+        <ng-container *ngFor="let w of wasteDetails; trackBy: trackById">
+          <div class="mb-3" *ngIf="getWasteCount(w.key) > 0">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi {{ w.icon }}" [style.color]="w.color"></i>
+                <span style="font-size:0.875rem;font-weight:600">{{ w.label }}</span>
+              </div>
+              <span class="fw-bold">{{ getWasteCount(w.key) }}</span>
+            </div>
+            <div class="progress" style="height:8px;border-radius:4px">
+              <div class="progress-bar" [style.background]="w.color"
+                [style.width.%]="totalWaste ? (getWasteCount(w.key) / totalWaste) * 100 : 0"></div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card-wz">
+        <div class="card-wz-header"><h5>Waste Category Cards</h5></div>
+        <div class="row g-2">
+          <div class="col-6" *ngFor="let w of wasteDetails; trackBy: trackById">
+            <div class="p-3 rounded text-center" [style.background]="w.bg">
+              <i class="bi {{ w.icon }} fs-4" [style.color]="w.color"></i>
+              <div class="fw-bold mt-1" [style.color]="w.color" style="font-size:1.3rem">{{ getWasteCount(w.key) }}</div>
+              <div style="font-size:0.78rem;font-weight:600;color:#374151">{{ w.label }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed pickups history -->
+  <div class="card-wz">
+    <div class="card-wz-header">
+      <h5>Pickup History (Completed)</h5>
+    </div>
+    <div *ngIf="!completedPickups.length" class="text-center py-4 text-muted">
+      <i class="bi bi-clock-history fs-1 d-block mb-2"></i>
+      No completed pickups yet.
+      <div class="mt-2"><a routerLink="/schedule-pickup" class="btn-wz-primary">Schedule First Pickup</a></div>
+    </div>
+    <div class="table-responsive" *ngIf="completedPickups.length">
+      <table class="table-wz w-100">
+        <thead><tr><th>Title</th><th>Waste Type</th><th>Quantity</th><th>Date</th><th>Completed On</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of completedPickups; trackBy: trackById">
+            <td>{{ p.title }}</td>
+            <td><span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span></td>
+            <td>{{ p.estimatedQuantity }}</td>
+            <td>{{ p.preferredDate | date:'mediumDate' }}</td>
+            <td>{{ p.completedAt ? (p.completedAt | date:'mediumDate') : 'N/A' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Environmental message -->
+  <div class="card-wz mt-3" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:none">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-tree-fill text-success fs-1"></i>
+      <div>
+        <h5 class="fw-bold mb-1">Thank you for your contribution!</h5>
+        <p class="mb-0 text-muted" style="font-size:0.875rem">
+          Every pickup you schedule helps reduce landfill waste and promotes responsible recycling.
+          Keep up the great work and inspire others to join the recycling revolution!
+        </p>
+      </div>
+    </div>
+  </div>
+</ng-container>

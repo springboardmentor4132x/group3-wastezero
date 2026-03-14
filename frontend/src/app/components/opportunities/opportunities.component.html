@@ -1,0 +1,109 @@
+<div class="page-header">
+  <h2>Pickup Opportunities</h2>
+  <p>Browse and accept available waste pickup requests near you</p>
+</div>
+
+<div *ngIf="successMsg" class="alert-wz success mb-3">{{ successMsg }}</div>
+<div *ngIf="errorMsg" class="alert-wz error mb-3">{{ errorMsg }}</div>
+
+<!-- Filters -->
+<div class="card-wz mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-4 form-wz">
+      <div class="form-group mb-0">
+        <label>Waste Type</label>
+        <select [(ngModel)]="filterType">
+          <option value="">All Types</option>
+          <option *ngFor="let wt of wasteTypes.slice(1); trackBy: trackByIndex" [value]="wt">{{ wt }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-4 form-wz">
+      <div class="form-group mb-0">
+        <label>Location</label>
+        <input type="text" [(ngModel)]="filterLocation" placeholder="Filter by location..." />
+      </div>
+    </div>
+    <div class="col-md-4">
+      <button class="btn-wz-outline" (click)="filterType=''; filterLocation=''">Clear Filters</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<div *ngIf="!loading && !filtered.length" class="card-wz text-center py-5 text-muted">
+  <i class="bi bi-search fs-1 d-block mb-2"></i>
+  No open pickup opportunities found.
+</div>
+
+<div class="row g-3" *ngIf="!loading">
+  <div class="col-md-6 col-lg-4" *ngFor="let p of filtered; trackBy: trackById">
+    <div class="card-wz h-100" style="border:1.5px solid #e2e8f0">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span>
+        <span class="badge-open">Open</span>
+      </div>
+      <h6 class="fw-bold mb-1">{{ p.title }}</h6>
+      <p *ngIf="p.description" class="text-muted mb-2" style="font-size:0.8rem">{{ p.description }}</p>
+
+      <div style="font-size:0.82rem;color:#64748b" class="mb-3">
+        <div><i class="bi bi-geo-alt me-1 text-danger"></i>{{ p.address }}</div>
+        <div><i class="bi bi-calendar me-1 text-primary"></i>{{ p.preferredDate | date:'mediumDate' }} at {{ p.preferredTime }}</div>
+        <div><i class="bi bi-box me-1 text-warning"></i>{{ p.estimatedQuantity }}</div>
+        <div *ngIf="getUser(p)"><i class="bi bi-person me-1"></i>{{ getUser(p).name }}</div>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap mt-auto">
+        <button class="btn-wz-primary btn-sm" (click)="accept(p._id)">
+          <i class="bi bi-check-lg me-1"></i>Accept
+        </button>
+        <button class="btn-wz-outline btn-sm" (click)="openDetail(p)">
+          <i class="bi bi-eye me-1"></i>Details
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="openMsg(p)">
+          <i class="bi bi-chat me-1"></i>Contact
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div *ngIf="selectedPickup" class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="card-wz" style="max-width:500px;width:100%">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">Pickup Details</h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeDetail()"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="form-wz">
+      <p><strong>Title:</strong> {{ selectedPickup.title }}</p>
+      <p><strong>Waste Type:</strong> <span class="waste-tag waste-{{selectedPickup.wasteType}}">{{ selectedPickup.wasteType }}</span></p>
+      <p><strong>Description:</strong> {{ selectedPickup.description || 'None' }}</p>
+      <p><strong>Quantity:</strong> {{ selectedPickup.estimatedQuantity }}</p>
+      <p><strong>Address:</strong> {{ selectedPickup.address }}</p>
+      <p><strong>Date:</strong> {{ selectedPickup.preferredDate | date:'fullDate' }}</p>
+      <p><strong>Time:</strong> {{ selectedPickup.preferredTime }}</p>
+      <p *ngIf="selectedPickup.contactDetails"><strong>Contact:</strong> {{ selectedPickup.contactDetails }}</p>
+      <p *ngIf="getUser(selectedPickup)"><strong>Requested by:</strong> {{ getUser(selectedPickup).name }}</p>
+    </div>
+    <div class="d-flex gap-2 justify-content-end mt-2">
+      <button class="btn-wz-outline" (click)="closeDetail()">Close</button>
+      <button class="btn-wz-primary" (click)="accept(selectedPickup._id); closeDetail()">Accept Pickup</button>
+    </div>
+  </div>
+</div>
+
+<!-- Message Modal -->
+<div *ngIf="msgModal" class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div class="card-wz" style="width:420px;max-width:95vw">
+    <h5 class="fw-bold mb-3">Message {{ msgModal.receiverName }}</h5>
+    <div class="form-group form-wz">
+      <textarea [(ngModel)]="msgContent" rows="3" placeholder="Type your message..."></textarea>
+    </div>
+    <div class="d-flex gap-2 justify-content-end">
+      <button class="btn-wz-outline" (click)="msgModal = null">Cancel</button>
+      <button class="btn-wz-primary" (click)="sendMessage()" [disabled]="msgSending">Send</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,155 @@
+<div class="page-header">
+  <h2>Reports & Analytics</h2>
+  <p>Generate and export platform reports</p>
+</div>
+
+<!-- Report tabs -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+  <button *ngFor="let tab of [{id:'users',label:'Users',icon:'bi-people'},{id:'pickups',label:'Pickups',icon:'bi-truck'},{id:'waste',label:'Waste',icon:'bi-recycle'},{id:'volunteers',label:'Volunteers',icon:'bi-person-badge'},{id:'logs',label:'Activity Logs',icon:'bi-activity'}]; trackBy: trackByIndex"
+    class="btn rounded-pill"
+    [class.btn-success]="activeReport === tab.id"
+    [class.btn-outline-secondary]="activeReport !== tab.id"
+    (click)="loadReport(tab.id)">
+    <i class="bi {{ tab.icon }} me-1"></i>{{ tab.label }}
+  </button>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<!-- Users Report -->
+<ng-container *ngIf="activeReport === 'users' && !loading">
+  <div class="card-wz">
+    <div class="card-wz-header">
+      <h5>User Report ({{ usersData.length }} users)</h5>
+      <button class="btn-wz-primary btn-sm" (click)="exportCSV('users')"><i class="bi bi-download me-1"></i>Export CSV</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table-wz w-100">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Location</th><th>Joined</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let u of usersData; trackBy: trackById">
+            <td class="fw-semibold">{{ u.name }}</td>
+            <td>{{ u.email }}</td>
+            <td><span class="badge" [class.bg-success]="u.role==='volunteer'" [class.bg-primary]="u.role==='user'" [class.bg-danger]="u.role==='admin'">{{ u.role }}</span></td>
+            <td>{{ u.location || '-' }}</td>
+            <td>{{ u.createdAt | date:'mediumDate' }}</td>
+            <td><span [class.badge-completed]="!u.isSuspended" [class.badge-cancelled]="u.isSuspended">{{ u.isSuspended ? 'Suspended' : 'Active' }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Pickups Report -->
+<ng-container *ngIf="activeReport === 'pickups' && !loading">
+  <div class="card-wz">
+    <div class="card-wz-header">
+      <h5>Pickup Report ({{ pickupsData.length }} pickups)</h5>
+      <button class="btn-wz-primary btn-sm" (click)="exportCSV('pickups')"><i class="bi bi-download me-1"></i>Export CSV</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table-wz w-100">
+        <thead><tr><th>Title</th><th>User</th><th>Waste Type</th><th>Date</th><th>Status</th><th>Volunteer</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of pickupsData; trackBy: trackById">
+            <td class="fw-semibold">{{ p.title }}</td>
+            <td>{{ getUser(p) }}</td>
+            <td><span class="waste-tag waste-{{p.wasteType}}">{{ p.wasteType }}</span></td>
+            <td>{{ p.preferredDate | date:'mediumDate' }}</td>
+            <td><span class="badge-{{p.status.toLowerCase()}}">{{ p.status }}</span></td>
+            <td>{{ getVolunteer(p) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Waste Report -->
+<ng-container *ngIf="activeReport === 'waste' && !loading">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card-wz">
+        <div class="card-wz-header"><h5>Waste by Category</h5></div>
+        <div *ngIf="!wasteData.wasteByType?.length" class="text-muted text-center py-4">No data yet</div>
+        <div *ngFor="let w of wasteData.wasteByType; trackBy: trackById" class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="waste-tag waste-{{w._id}}">{{ w._id }}</span>
+            <strong>{{ w.count }} pickups</strong>
+          </div>
+          <div class="progress" style="height:10px">
+            <div class="progress-bar bg-success" [style.width.%]="(w.count / totalWaste(wasteData)) * 100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card-wz">
+        <div class="card-wz-header"><h5>Monthly Trends</h5></div>
+        <div *ngIf="!wasteData.monthlyTrend?.length" class="text-muted text-center py-4">No data yet</div>
+        <div class="table-responsive" *ngIf="wasteData.monthlyTrend?.length">
+          <table class="table-wz w-100">
+            <thead><tr><th>Month</th><th>Total</th><th>Completed</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let m of wasteData.monthlyTrend">
+                <td>{{ m._id.year }}-{{ m._id.month | number:'2.0' }}</td>
+                <td>{{ m.total }}</td>
+                <td>{{ m.completed }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Volunteers Report -->
+<ng-container *ngIf="activeReport === 'volunteers' && !loading">
+  <div class="card-wz">
+    <div class="card-wz-header">
+      <h5>Volunteer Report ({{ volunteersData.length }} volunteers)</h5>
+      <button class="btn-wz-primary btn-sm" (click)="exportCSV('volunteers')"><i class="bi bi-download me-1"></i>Export CSV</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table-wz w-100">
+        <thead><tr><th>Name</th><th>Email</th><th>Location</th><th>Accepted</th><th>Completed</th><th>Total Done</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let v of volunteersData; trackBy: trackById">
+            <td class="fw-semibold">{{ v.name }}</td>
+            <td>{{ v.email }}</td>
+            <td>{{ v.location || '-' }}</td>
+            <td>{{ v.acceptedPickups }}</td>
+            <td>{{ v.completedPickups }}</td>
+            <td><strong>{{ v.totalPickupsCompleted || 0 }}</strong></td>
+          </tr>
+          <tr *ngIf="!volunteersData.length">
+            <td colspan="6" class="text-center text-muted">No volunteers found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Activity Logs -->
+<ng-container *ngIf="activeReport === 'logs' && !loading">
+  <div class="card-wz">
+    <div class="card-wz-header"><h5>Activity Logs (Last 100)</h5></div>
+    <div class="table-responsive">
+      <table class="table-wz w-100">
+        <thead><tr><th>Action</th><th>User</th><th>Details</th><th>Timestamp</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let log of logs; trackBy: trackById">
+            <td><span class="badge bg-secondary" style="font-size:0.72rem">{{ log.action }}</span></td>
+            <td>{{ log.user_id?.name || '-' }}</td>
+            <td>{{ log.details }}</td>
+            <td>{{ log.timestamp | date:'short' }}</td>
+          </tr>
+          <tr *ngIf="!logs.length"><td colspan="4" class="text-center text-muted">No logs found</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ng-container>

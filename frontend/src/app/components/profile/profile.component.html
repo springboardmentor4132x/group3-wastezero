@@ -1,0 +1,122 @@
+<div class="page-header">
+  <h2>My Profile</h2>
+  <p>Manage your account information and settings</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Tabs -->
+    <div class="d-flex gap-2 mb-4">
+      <button class="btn rounded-pill" [class.btn-success]="activeTab === 'profile'" [class.btn-outline-secondary]="activeTab !== 'profile'" (click)="activeTab = 'profile'; errorMsg = ''; successMsg = ''">
+        <i class="bi bi-person me-1"></i>Profile
+      </button>
+      <button class="btn rounded-pill" [class.btn-success]="activeTab === 'password'" [class.btn-outline-secondary]="activeTab !== 'password'" (click)="activeTab = 'password'; errorMsg = ''; successMsg = ''">
+        <i class="bi bi-shield-lock me-1"></i>Password
+      </button>
+    </div>
+
+    <div *ngIf="successMsg" class="alert-wz success mb-3">{{ successMsg }}</div>
+    <div *ngIf="errorMsg" class="alert-wz error mb-3">{{ errorMsg }}</div>
+
+    <!-- Profile Tab -->
+    <div *ngIf="activeTab === 'profile'" class="card-wz">
+      <h5 class="fw-bold mb-1">Personal Information</h5>
+      <p class="text-muted mb-3" style="font-size:0.875rem">Update your personal information and profile details</p>
+      <form (ngSubmit)="saveProfile()" class="form-wz">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" [(ngModel)]="profileForm.name" name="name" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="profileForm.email" name="email" />
+          <small class="text-muted">This is the email address used for account notifications.</small>
+        </div>
+        <div class="form-group">
+          <label>Location Area</label>
+          <input type="text" [(ngModel)]="profileForm.location" name="location" placeholder="City, Area" />
+          <small class="text-muted">General area name.</small>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-5 form-group mb-0">
+            <label>Latitude <span class="text-muted">(For auto-match)</span></label>
+            <input type="number" step="any" [(ngModel)]="profileForm.latitude" name="latitude" placeholder="e.g. 13.0827" />
+          </div>
+          <div class="col-md-5 form-group mb-0">
+            <label>Longitude <span class="text-muted">(For auto-match)</span></label>
+            <input type="number" step="any" [(ngModel)]="profileForm.longitude" name="longitude" placeholder="e.g. 80.2707" />
+          </div>
+          <div class="col-md-2 d-flex align-items-end form-group mb-0">
+            <button type="button" class="btn btn-outline-success w-100" (click)="getLocation()" title="Get Current Location">
+              <i class="bi bi-geo-alt-fill"></i> Get
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Skills (comma-separated)</label>
+          <input type="text" [(ngModel)]="profileForm.skills" name="skills" placeholder="e.g. driving, teamwork, etc." />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" [(ngModel)]="profileForm.phone" name="phone" placeholder="Contact number" />
+        </div>
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea [(ngModel)]="profileForm.bio" name="bio" placeholder="Short description about yourself..."></textarea>
+        </div>
+        <button type="submit" class="btn-wz-primary" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Save Changes
+        </button>
+      </form>
+    </div>
+
+    <!-- Password Tab -->
+    <div *ngIf="activeTab === 'password'" class="card-wz">
+      <h5 class="fw-bold mb-1">Change Password</h5>
+      <p class="text-muted mb-3" style="font-size:0.875rem">Ensure your account uses a strong, unique password</p>
+      <form (ngSubmit)="changePassword()" class="form-wz">
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" [(ngModel)]="passwordForm.currentPassword" name="current" placeholder="Enter current password" />
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" [(ngModel)]="passwordForm.newPassword" name="newpw" placeholder="New password (min 6 chars)" />
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" [(ngModel)]="passwordForm.confirmNew" name="confirm" placeholder="Confirm new password" />
+        </div>
+        <button type="submit" class="btn-wz-primary" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Change Password
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile summary -->
+  <div class="col-lg-4">
+    <div class="card-wz text-center">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.8rem;margin:0 auto 12px">
+        {{ initials }}
+      </div>
+      <h5 class="fw-bold">{{ user?.name }}</h5>
+      <span class="badge bg-success text-white text-capitalize" style="font-size:0.8rem">{{ user?.role }}</span>
+      <hr />
+      <div class="text-start" style="font-size:0.875rem">
+        <div class="mb-2"><i class="bi bi-envelope me-2 text-muted"></i>{{ user?.email }}</div>
+        <div class="mb-2" *ngIf="user?.location"><i class="bi bi-geo-alt me-2 text-muted"></i>{{ user?.location }}</div>
+        <div class="mb-2" *ngIf="user?.phone"><i class="bi bi-phone me-2 text-muted"></i>{{ user?.phone }}</div>
+        <div class="mb-2" *ngIf="user?.username"><i class="bi bi-at me-2 text-muted"></i>{{ user?.username }}</div>
+      </div>
+      <div *ngIf="user?.skills?.length" class="mt-2">
+        <div class="fw-bold mb-1" style="font-size:0.85rem">Skills</div>
+        <div class="d-flex flex-wrap gap-1 justify-content-center">
+          <span *ngFor="let s of user?.skills; trackBy: trackByIndex" class="badge bg-light text-dark border" style="font-size:0.75rem">{{ s }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

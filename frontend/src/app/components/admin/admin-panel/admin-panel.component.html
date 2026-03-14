@@ -1,0 +1,120 @@
+<div class="page-header">
+  <h2>Admin Panel</h2>
+  <p>Platform overview, monitoring, and management</p>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<ng-container *ngIf="!loading">
+  <div class="row g-3 mb-4">
+    <div class="col-md-2 col-4">
+      <div class="stat-card text-center">
+        <h3>{{ stats.totalUsers || 0 }}</h3>
+        <p>Users</p>
+        <i class="bi bi-person text-success fs-4"></i>
+      </div>
+    </div>
+    <div class="col-md-2 col-4">
+      <div class="stat-card accent text-center">
+        <h3>{{ stats.totalVolunteers || 0 }}</h3>
+        <p>Volunteers</p>
+        <i class="bi bi-people" style="color:var(--wz-accent);font-size:1.5rem"></i>
+      </div>
+    </div>
+    <div class="col-md-2 col-4">
+      <div class="stat-card info text-center">
+        <h3>{{ stats.totalPickups || 0 }}</h3>
+        <p>Total Pickups</p>
+        <i class="bi bi-truck" style="color:#3f51b5;font-size:1.5rem"></i>
+      </div>
+    </div>
+    <div class="col-md-2 col-4">
+      <div class="stat-card text-center">
+        <h3>{{ stats.completedPickups || 0 }}</h3>
+        <p>Completed</p>
+        <i class="bi bi-check-circle text-success fs-4"></i>
+      </div>
+    </div>
+    <div class="col-md-2 col-4">
+      <div class="stat-card warning text-center">
+        <h3>{{ stats.pendingPickups || 0 }}</h3>
+        <p>Pending</p>
+        <i class="bi bi-clock" style="color:#ff9800;font-size:1.5rem"></i>
+      </div>
+    </div>
+    <div class="col-md-2 col-4">
+      <div class="stat-card danger text-center">
+        <h3>{{ stats.cancelledPickups || 0 }}</h3>
+        <p>Cancelled</p>
+        <i class="bi bi-x-circle" style="color:#f44336;font-size:1.5rem"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <a routerLink="/admin/users" class="card-wz d-block text-decoration-none" style="border:2px solid #e2e8f0;cursor:pointer;transition:border 0.2s" onmouseover="this.style.borderColor='#2e7d32'" onmouseout="this.style.borderColor='#e2e8f0'">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#e8f5e9;border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="bi bi-people-fill text-success fs-4"></i></div>
+          <div><div class="fw-bold">Manage Users</div><div class="text-muted" style="font-size:0.8rem">View, suspend, delete</div></div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a routerLink="/admin/pickups" class="card-wz d-block text-decoration-none" style="border:2px solid #e2e8f0;cursor:pointer;transition:border 0.2s" onmouseover="this.style.borderColor='#2e7d32'" onmouseout="this.style.borderColor='#e2e8f0'">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#e3f2fd;border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="bi bi-truck fs-4" style="color:#1565c0"></i></div>
+          <div><div class="fw-bold">All Pickups</div><div class="text-muted" style="font-size:0.8rem">Monitor all requests</div></div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a routerLink="/admin/reports" class="card-wz d-block text-decoration-none" style="border:2px solid #e2e8f0;cursor:pointer;transition:border 0.2s" onmouseover="this.style.borderColor='#2e7d32'" onmouseout="this.style.borderColor='#e2e8f0'">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#fff3e0;border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="bi bi-file-earmark-bar-graph fs-4" style="color:#e65100"></i></div>
+          <div><div class="fw-bold">Reports</div><div class="text-muted" style="font-size:0.8rem">Analytics & exports</div></div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a routerLink="/messages" class="card-wz d-block text-decoration-none" style="border:2px solid #e2e8f0;cursor:pointer;transition:border 0.2s" onmouseover="this.style.borderColor='#2e7d32'" onmouseout="this.style.borderColor='#e2e8f0'">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#f3e5f5;border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="bi bi-chat-dots fs-4" style="color:#6a1b9a"></i></div>
+          <div><div class="fw-bold">Messages</div><div class="text-muted" style="font-size:0.8rem">Platform communications</div></div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Waste by type + Activity -->
+  <div class="row g-3">
+    <div class="col-md-5">
+      <div class="card-wz">
+        <div class="card-wz-header"><h5>Waste by Category (Completed)</h5></div>
+        <div *ngIf="!stats.wasteByType?.length" class="text-muted text-center py-4">No completed pickups yet</div>
+        <div *ngFor="let w of stats.wasteByType; trackBy: trackById" class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="waste-tag waste-{{w._id}}">{{ w._id }}</span>
+            <strong>{{ w.count }}</strong>
+          </div>
+          <div class="progress" style="height:8px">
+            <div class="progress-bar bg-success" [style.width.%]="(w.count / (stats.completedPickups || 1)) * 100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="card-wz" style="max-height:400px;overflow-y:auto">
+        <div class="card-wz-header"><h5>Recent Activity</h5></div>
+        <div *ngFor="let log of stats.recentActivity; trackBy: trackById" class="d-flex align-items-start gap-2 mb-2 pb-2" style="border-bottom:1px solid #f1f5f9">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--wz-primary);margin-top:6px;flex-shrink:0"></div>
+          <div>
+            <div style="font-size:0.85rem;color:#374151">{{ log.details }}</div>
+            <div style="font-size:0.75rem;color:#94a3b8">{{ log.timestamp | date:'short' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

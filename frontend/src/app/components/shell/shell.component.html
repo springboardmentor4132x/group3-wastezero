@@ -1,0 +1,119 @@
+<div class="app-shell">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <a routerLink="/dashboard" class="brand">
+        <i class="bi bi-recycle"></i> WasteZero
+      </a>
+    </div>
+
+    <div class="sidebar-user" *ngIf="user">
+      <div class="avatar">{{ initials }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ user.name }}</div>
+        <div class="user-role">{{ user.role }}</div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Main Menu</div>
+      <a routerLink="/dashboard" [class.active]="isActive('/dashboard')">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+
+      <!-- User links -->
+      <ng-container *ngIf="user?.role === 'user'">
+        <a routerLink="/schedule-pickup" [class.active]="isActive('/schedule-pickup')">
+          <i class="bi bi-calendar-plus"></i> Schedule Pickup
+        </a>
+        <a routerLink="/my-pickups" [class.active]="isActive('/my-pickups')">
+          <i class="bi bi-truck"></i> My Pickups
+        </a>
+      </ng-container>
+
+      <!-- Volunteer links -->
+      <ng-container *ngIf="user?.role === 'volunteer'">
+        <a routerLink="/opportunities" [class.active]="isActive('/opportunities')">
+          <i class="bi bi-search"></i> Opportunities
+        </a>
+        <a routerLink="/my-pickups" [class.active]="isActive('/my-pickups')">
+          <i class="bi bi-truck"></i> My Assigned Pickups
+        </a>
+      </ng-container>
+
+      <!-- Admin links -->
+      <ng-container *ngIf="user?.role === 'admin'">
+        <a routerLink="/admin/panel" [class.active]="isActive('/admin/panel')">
+          <i class="bi bi-grid"></i> Admin Panel
+        </a>
+        <a routerLink="/admin/pickups" [class.active]="isActive('/admin/pickups')">
+          <i class="bi bi-truck"></i> All Pickups
+        </a>
+        <a routerLink="/admin/users" [class.active]="isActive('/admin/users')">
+          <i class="bi bi-people"></i> Users
+        </a>
+        <a routerLink="/admin/reports" [class.active]="isActive('/admin/reports')">
+          <i class="bi bi-file-earmark-bar-graph"></i> Reports
+        </a>
+      </ng-container>
+
+      <a routerLink="/messages" [class.active]="isActive('/messages')">
+        <i class="bi bi-chat-dots"></i> Messages
+      </a>
+
+      <ng-container *ngIf="user?.role === 'user'">
+        <a routerLink="/my-impact" [class.active]="isActive('/my-impact')">
+          <i class="bi bi-graph-up"></i> My Impact
+        </a>
+      </ng-container>
+
+      <div class="nav-section-label">Settings</div>
+      <a routerLink="/profile" [class.active]="isActive('/profile')">
+        <i class="bi bi-person-circle"></i> My Profile
+      </a>
+      <ng-container *ngIf="user?.role === 'admin'">
+        <a routerLink="/admin/panel" [class.active]="isActive('/admin/panel')">
+          <i class="bi bi-shield-check"></i> Admin Panel
+        </a>
+      </ng-container>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="d-flex align-items-center justify-content-between px-1 mb-2" style="color:#90a4ae;font-size:0.8rem;">
+        Dark Mode
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" [checked]="darkMode" (change)="toggleDark()" />
+        </div>
+      </div>
+      <button (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="search-bar">
+        <i class="bi bi-search" style="color:#94a3b8"></i>
+        <input type="text" placeholder="Search pickups, opportunities..." />
+      </div>
+      <div class="top-actions">
+        <button class="btn btn-link p-0" style="color:#64748b">
+          <i class="bi bi-bell" style="font-size:1.3rem"></i>
+        </button>
+        <div class="d-flex align-items-center gap-2" style="cursor:pointer" routerLink="/profile">
+          <div class="avatar" style="width:32px;height:32px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;">{{ initials }}</div>
+          <span style="font-size:0.875rem;font-weight:600;color:#374151">{{ user?.name }}</span>
+          <i class="bi bi-chevron-down" style="font-size:0.75rem;color:#94a3b8"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

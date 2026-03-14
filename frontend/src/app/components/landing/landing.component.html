@@ -1,0 +1,734 @@
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- NAVBAR                                                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<nav class="landing-nav" [class.scrolled]="navScrolled()" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a class="nav-brand" (click)="scrollTo('hero')" tabindex="0" role="button">
+      <i class="bi bi-recycle" aria-hidden="true"></i>
+      <span>WasteZero</span>
+    </a>
+
+    <ul class="nav-links" [class.open]="mobileMenuOpen()" role="menubar">
+      <li role="none"><a role="menuitem" (click)="scrollTo('about')">About</a></li>
+      <li role="none"><a role="menuitem" (click)="scrollTo('lifecycle')">How It Works</a></li>
+      <li role="none"><a role="menuitem" (click)="scrollTo('dashboards')">Dashboards</a></li>
+      <li role="none"><a role="menuitem" (click)="scrollTo('schedule')">Schedule</a></li>
+      <li role="none"><a role="menuitem" (click)="scrollTo('reporting')">Reports</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      @if (isLoggedIn()) {
+        <button class="btn-nav-primary" (click)="goToDashboard()" id="nav-dashboard-btn">
+          <i class="bi bi-grid-1x2" aria-hidden="true"></i> Dashboard
+        </button>
+      } @else {
+        <button class="btn-nav-outline" (click)="goToLogin()" id="nav-login-btn">Log In</button>
+        <button class="btn-nav-primary" (click)="goToLogin()" id="nav-get-started-btn">Get Started</button>
+      }
+    </div>
+
+    <button class="mobile-menu-toggle" (click)="toggleMobileMenu()" aria-label="Toggle menu" aria-expanded="false">
+      <i class="bi" [class.bi-list]="!mobileMenuOpen()" [class.bi-x-lg]="mobileMenuOpen()"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 1. HERO SECTION                                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="hero-section" id="hero">
+  <div class="hero-inner">
+    <div class="hero-content reveal">
+      <span class="hero-badge">🌱 For a Cleaner Tomorrow</span>
+      <h1>Smart Waste Pickup.<br>Smarter Recycling.</h1>
+      <p class="hero-subtitle">
+        WasteZero connects citizens, verified volunteers, and administrators to make waste collection seamless,
+        transparent, and impactful — from scheduling to reporting.
+      </p>
+      <div class="hero-cta-row">
+        <button class="btn-hero-primary" (click)="scrollTo('schedule')" id="hero-schedule-btn">
+          <i class="bi bi-calendar-plus" aria-hidden="true"></i> Schedule Pickup
+        </button>
+        <button class="btn-hero-outline" (click)="scrollTo('lifecycle')" id="hero-how-btn">
+          See How It Works <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="hero-stats">
+        @for (stat of stats; track stat.label) {
+          <div class="hero-stat">
+            <span class="hero-stat-value" [attr.data-counter]="stat.value" [attr.data-suffix]="stat.suffix">0</span>
+            <span class="hero-stat-label">{{ stat.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="hero-visual reveal">
+      <img src="landing/hero.png" alt="Community waste pickup illustration showing a volunteer collecting recyclables" loading="eager" width="560" height="400" />
+    </div>
+  </div>
+  <div class="hero-wave" aria-hidden="true">
+    <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
+      <path d="M0,60 C360,100 720,20 1080,60 C1260,80 1380,40 1440,50 L1440,100 L0,100Z" fill="#fff"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 2. WHAT IS WASTEZERO?                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="about-section" id="about">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">About the Platform</span>
+      <h2>What is WasteZero?</h2>
+      <p class="section-desc">
+        WasteZero is a full-stack digital platform that streamlines waste pickup — from the moment a citizen schedules a collection
+        to the admin generating city-wide reports. It connects people, processes, and data.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      @for (feat of features; track feat.title; let i = $index) {
+        <div class="feature-card reveal" [style.transition-delay]="i * 0.1 + 's'">
+          <div class="feature-icon">
+            <i class="bi {{ feat.icon }}" aria-hidden="true"></i>
+          </div>
+          <h3>{{ feat.title }}</h3>
+          <p>{{ feat.desc }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- Waste Categories -->
+    <div class="waste-categories reveal">
+      <h3>Waste Categories We Handle</h3>
+      <div class="category-row">
+        @for (cat of wasteCategories; track cat.name) {
+          <div class="category-chip" [style.background]="cat.bg" [style.color]="cat.color">
+            <!-- Inline SVG icons -->
+            @switch (cat.name) {
+              @case ('Plastic') {
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-1 7H9L8 2z"/><path d="M9 9l-1 13h8L15 9"/><path d="M7 5h10"/></svg>
+              }
+              @case ('Organic') {
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c-4-4-8-7.5-8-12a8 8 0 0116 0c0 4.5-4 8-8 12z"/><path d="M12 10v6"/><path d="M9 13h6"/></svg>
+              }
+              @case ('E-Waste') {
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/><circle cx="12" cy="10" r="2"/></svg>
+              }
+              @case ('Metal') {
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2l6 4 6-4v6l-6 4-6-4V2z"/><path d="M6 8v8l6 4 6-4V8"/></svg>
+              }
+              @case ('Other') {
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+              }
+            }
+            <span>{{ cat.name }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 3. PICKUP LIFECYCLE TIMELINE                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="lifecycle-section" id="lifecycle">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">The Process</span>
+      <h2>Pickup Lifecycle</h2>
+      <p class="section-desc">Every pickup follows a transparent 8-step journey — from request to report.</p>
+    </div>
+
+    <div class="timeline" role="list" aria-label="Pickup lifecycle steps">
+      @for (step of timelineSteps; track step.title; let i = $index) {
+        <div
+          class="timeline-item reveal"
+          [class.timeline-active]="i <= activeTimelineStep()"
+          [attr.data-step]="i"
+          [style.transition-delay]="i * 0.08 + 's'"
+          role="listitem"
+        >
+          <div class="timeline-connector" aria-hidden="true">
+            <div class="timeline-dot">
+              <i class="bi {{ step.icon }}" aria-hidden="true"></i>
+            </div>
+            @if (i < timelineSteps.length - 1) {
+              <div class="timeline-line"></div>
+            }
+          </div>
+          <div class="timeline-content">
+            <span class="timeline-step-num">Step {{ i + 1 }}</span>
+            <h4>{{ step.title }}</h4>
+            <p>{{ step.desc }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 4. ROLE SPOTLIGHT — THREE DASHBOARDS                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dashboards-section" id="dashboards">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">Role-Based Access</span>
+      <h2>Three Dashboards. One Platform.</h2>
+      <p class="section-desc">Each role — citizen, volunteer, and admin — has a dedicated dashboard tailored to their needs.</p>
+    </div>
+
+    <div class="dashboard-tabs reveal">
+      <button
+        [class.active]="activeDashboard() === 'user'"
+        (click)="activeDashboard.set('user')"
+        id="tab-user"
+      >
+        <i class="bi bi-person" aria-hidden="true"></i> Citizen
+      </button>
+      <button
+        [class.active]="activeDashboard() === 'volunteer'"
+        (click)="activeDashboard.set('volunteer')"
+        id="tab-volunteer"
+      >
+        <i class="bi bi-truck" aria-hidden="true"></i> Volunteer
+      </button>
+      <button
+        [class.active]="activeDashboard() === 'admin'"
+        (click)="activeDashboard.set('admin')"
+        id="tab-admin"
+      >
+        <i class="bi bi-shield-lock" aria-hidden="true"></i> Admin
+      </button>
+    </div>
+
+    <div class="dashboard-panels">
+      <!-- USER DASHBOARD -->
+      @if (activeDashboard() === 'user') {
+        <div class="dashboard-panel reveal">
+          <div class="panel-info">
+            <div class="panel-role-badge user-badge">
+              <i class="bi bi-person-fill" aria-hidden="true"></i> Citizen
+            </div>
+            <h3>Schedule pickups and track recycling impact.</h3>
+            <ul class="panel-features">
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Welcome message & quick actions</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Total, completed, and pending pickups</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Waste breakdown summary</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Personal recycling impact</li>
+            </ul>
+            <button class="btn-panel" (click)="scrollTo('schedule')">
+              Try Scheduling <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="panel-preview">
+            <img src="landing/dashboard-user.png" alt="Citizen dashboard showing pickup statistics and waste breakdown" loading="lazy" />
+          </div>
+        </div>
+      }
+
+      <!-- VOLUNTEER DASHBOARD -->
+      @if (activeDashboard() === 'volunteer') {
+        <div class="dashboard-panel reveal">
+          <div class="panel-info">
+            <div class="panel-role-badge volunteer-badge">
+              <i class="bi bi-truck" aria-hidden="true"></i> Volunteer
+            </div>
+            <h3>Accept pickups and log collections.</h3>
+            <ul class="panel-features">
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Nearby pickup opportunities</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Accepted requests tracker</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Completed pickups count</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Notifications & quick actions</li>
+            </ul>
+            <button class="btn-panel" (click)="scrollTo('opportunities')">
+              View Opportunities <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="panel-preview">
+            <img src="landing/dashboard-volunteer.png" alt="Volunteer dashboard showing pickup opportunities and accepted requests" loading="lazy" />
+          </div>
+        </div>
+      }
+
+      <!-- ADMIN DASHBOARD -->
+      @if (activeDashboard() === 'admin') {
+        <div class="dashboard-panel reveal">
+          <div class="panel-info">
+            <div class="panel-role-badge admin-badge">
+              <i class="bi bi-shield-lock-fill" aria-hidden="true"></i> Admin
+            </div>
+            <h3>Monitor platform and generate reports.</h3>
+            <ul class="panel-features">
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Total users and volunteers</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Pickup requests (completed vs pending)</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Activity summary & analytics</li>
+              <li><i class="bi bi-check-lg" aria-hidden="true"></i> Report export (CSV / PDF)</li>
+            </ul>
+            <button class="btn-panel" (click)="scrollTo('reporting')">
+              See Reports <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="panel-preview">
+            <img src="landing/dashboard-admin.png" alt="Admin dashboard showing platform analytics and reporting" loading="lazy" />
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 5. SCHEDULE PICKUP — INTERACTIVE FORM                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="schedule-section" id="schedule">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">For Citizens</span>
+      <h2>Schedule a Pickup</h2>
+      <p class="section-desc">Fill in the details below and your request will be visible to nearby volunteers.</p>
+    </div>
+
+    <div class="schedule-layout reveal">
+      <div class="schedule-form-wrap">
+        <form class="pickup-form" (ngSubmit)="submitPickup()" novalidate>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="pickup-waste-type">Waste Type *</label>
+              <select id="pickup-waste-type" [(ngModel)]="pickupForm.wasteType" name="wasteType" [class.error]="formErrors['wasteType']">
+                <option value="">Select type</option>
+                @for (cat of wasteCategories; track cat.name) {
+                  <option [value]="cat.name">{{ cat.name }}</option>
+                }
+              </select>
+              @if (formErrors['wasteType']) {
+                <span class="field-error" role="alert">{{ formErrors['wasteType'] }}</span>
+              }
+            </div>
+            <div class="form-group">
+              <label for="pickup-quantity">Estimated Quantity *</label>
+              <input id="pickup-quantity" type="text" [(ngModel)]="pickupForm.quantity" name="quantity" placeholder="e.g. 5 kg, 3 bags" [class.error]="formErrors['quantity']" />
+              @if (formErrors['quantity']) {
+                <span class="field-error" role="alert">{{ formErrors['quantity'] }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="pickup-desc">Description *</label>
+            <textarea id="pickup-desc" [(ngModel)]="pickupForm.description" name="description" rows="2" placeholder="Describe the waste…" [class.error]="formErrors['description']"></textarea>
+            @if (formErrors['description']) {
+              <span class="field-error" role="alert">{{ formErrors['description'] }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="pickup-address">Pickup Address *</label>
+            <input id="pickup-address" type="text" [(ngModel)]="pickupForm.address" name="address" placeholder="Full street address" [class.error]="formErrors['address']" />
+            @if (formErrors['address']) {
+              <span class="field-error" role="alert">{{ formErrors['address'] }}</span>
+            }
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="pickup-date">Date *</label>
+              <input id="pickup-date" type="date" [(ngModel)]="pickupForm.date" name="date" [class.error]="formErrors['date']" />
+              @if (formErrors['date']) {
+                <span class="field-error" role="alert">{{ formErrors['date'] }}</span>
+              }
+            </div>
+            <div class="form-group">
+              <label for="pickup-time">Time *</label>
+              <input id="pickup-time" type="time" [(ngModel)]="pickupForm.time" name="time" [class.error]="formErrors['time']" />
+              @if (formErrors['time']) {
+                <span class="field-error" role="alert">{{ formErrors['time'] }}</span>
+              }
+            </div>
+            <div class="form-group">
+              <label for="pickup-contact">Contact *</label>
+              <input id="pickup-contact" type="text" [(ngModel)]="pickupForm.contact" name="contact" placeholder="Phone or email" [class.error]="formErrors['contact']" />
+              @if (formErrors['contact']) {
+                <span class="field-error" role="alert">{{ formErrors['contact'] }}</span>
+              }
+            </div>
+          </div>
+
+          <button class="btn-form-submit" type="submit" id="submit-pickup-btn">
+            <i class="bi bi-send" aria-hidden="true"></i> Submit Pickup Request
+          </button>
+        </form>
+      </div>
+
+      <div class="schedule-preview">
+        <h4><i class="bi bi-inbox" aria-hidden="true"></i> Created Requests</h4>
+        @if (createdRequests().length === 0 && !formSubmitted()) {
+          <div class="empty-state">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <p>Submit the form to see your request appear here.</p>
+          </div>
+        }
+        @for (req of createdRequests(); track req.id) {
+          <div class="request-card card-enter">
+            <div class="request-card-header">
+              <span class="waste-tag" [ngClass]="getWasteClass(req.wasteType)">{{ req.wasteType }}</span>
+              <span class="status-badge status-open">Open</span>
+            </div>
+            <p class="request-desc">{{ req.description }}</p>
+            <div class="request-meta">
+              <span><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ req.address }}</span>
+              <span><i class="bi bi-calendar3" aria-hidden="true"></i> {{ req.date }}</span>
+              <span><i class="bi bi-clock" aria-hidden="true"></i> {{ req.time }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Success toast -->
+    @if (showToast()) {
+      <div class="toast-success" role="alert" aria-live="polite">
+        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        Pickup request created successfully! Status: <strong>Open</strong>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 6. VOLUNTEER OPPORTUNITIES                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="opportunities-section" id="opportunities">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">For Volunteers</span>
+      <h2>Available Pickup Opportunities</h2>
+      <p class="section-desc">Volunteers can browse and accept open pickup requests in their area.</p>
+    </div>
+
+    <div class="opps-grid reveal">
+      @for (opp of opportunities(); track opp.id) {
+        <div class="opp-card" [class.opp-assigned]="opp.status === 'Assigned'">
+          <div class="opp-card-top">
+            <span class="waste-tag" [ngClass]="getWasteClass(opp.wasteType)">{{ opp.wasteType }}</span>
+            <span class="status-badge" [class.status-open]="opp.status === 'Open'" [class.status-accepted]="opp.status === 'Assigned'">
+              {{ opp.status }}
+            </span>
+          </div>
+          <div class="opp-details">
+            <div><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ opp.location }}</div>
+            <div><i class="bi bi-calendar3" aria-hidden="true"></i> {{ opp.date }} · {{ opp.time }}</div>
+            <div><i class="bi bi-box-seam" aria-hidden="true"></i> {{ opp.quantity }}</div>
+          </div>
+          @if (opp.status === 'Open') {
+            <button class="btn-accept" (click)="openAcceptModal(opp)" [id]="'accept-btn-' + opp.id">
+              <i class="bi bi-hand-thumbs-up" aria-hidden="true"></i> Accept Pickup
+            </button>
+          } @else {
+            <div class="opp-assigned-row">
+              <span class="assigned-label"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Assigned to you</span>
+              <button class="btn-message-sm" (click)="scrollTo('messaging')">
+                <i class="bi bi-chat-dots" aria-hidden="true"></i> Message
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Accept Modal -->
+  @if (showAcceptModal()) {
+    <div class="modal-overlay" (click)="cancelAccept()" (keydown.escape)="cancelAccept()" role="dialog" aria-modal="true" aria-label="Accept pickup confirmation">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Accept this pickup?</h3>
+        @if (selectedOpportunity(); as opp) {
+          <div class="modal-details">
+            <p><strong>Waste:</strong> {{ opp.wasteType }} · {{ opp.quantity }}</p>
+            <p><strong>Location:</strong> {{ opp.location }}</p>
+            <p><strong>Date:</strong> {{ opp.date }} at {{ opp.time }}</p>
+          </div>
+        }
+        <div class="modal-actions">
+          <button class="btn-modal-cancel" (click)="cancelAccept()">Cancel</button>
+          <button class="btn-modal-confirm" (click)="confirmAccept()" id="confirm-accept-btn">
+            <i class="bi bi-check-lg" aria-hidden="true"></i> Confirm Accept
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 7. MESSAGING PREVIEW                                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="messaging-section" id="messaging">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">Communication</span>
+      <h2>In-App Messaging</h2>
+      <p class="section-desc">Citizens and volunteers can coordinate pickups through real-time chat.</p>
+    </div>
+
+    <div class="chat-demo reveal">
+      <div class="chat-demo-sidebar">
+        <div class="chat-demo-sidebar-header">
+          <i class="bi bi-chat-left-text" aria-hidden="true"></i> Conversations
+        </div>
+        <div class="chat-demo-conv active">
+          <div class="conv-avatar v-avatar">A</div>
+          <div>
+            <div class="conv-name">Amit (Volunteer)</div>
+            <div class="conv-preview">On my way now! 🚛</div>
+          </div>
+        </div>
+        <div class="chat-demo-conv">
+          <div class="conv-avatar">P</div>
+          <div>
+            <div class="conv-name">Priya (Volunteer)</div>
+            <div class="conv-preview">Completed your pickup</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-demo-main">
+        <div class="chat-demo-header">
+          <div class="conv-avatar v-avatar sm">A</div>
+          <div>
+            <strong>Amit Kumar</strong>
+            <span class="online-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-demo-messages" id="chat-messages">
+          @for (msg of chatMessages(); track $index) {
+            <div class="chat-bubble" [class.sent]="msg.sender === 'user'" [class.received]="msg.sender === 'volunteer'">
+              <div class="bubble-text">{{ msg.text }}</div>
+              <div class="bubble-time">{{ msg.time }}</div>
+            </div>
+          }
+          @if (showTyping()) {
+            <div class="chat-bubble received typing-indicator" aria-label="Volunteer is typing">
+              <span></span><span></span><span></span>
+            </div>
+          }
+        </div>
+
+        <div class="chat-demo-input">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            [ngModel]="newMessage()"
+            (ngModelChange)="newMessage.set($event)"
+            (keydown)="onMessageKeydown($event)"
+            aria-label="Message input"
+            id="chat-input"
+          />
+          <button class="btn-send" (click)="sendMessage()" aria-label="Send message" id="chat-send-btn">
+            <i class="bi bi-send-fill" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 8. ADMIN REPORTING & MONITORING                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="reporting-section" id="reporting">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">For Admins</span>
+      <h2>Reporting &amp; Monitoring</h2>
+      <p class="section-desc">Comprehensive analytics with exportable reports for platform-wide insights.</p>
+    </div>
+
+    <!-- Filter controls -->
+    <div class="report-filters reveal">
+      <div class="filter-group">
+        <label for="filter-date">Date Range</label>
+        <select id="filter-date" [(ngModel)]="reportFilter.dateRange" name="dateRange">
+          <option value="last7">Last 7 Days</option>
+          <option value="last30">Last 30 Days</option>
+          <option value="last90">Last 90 Days</option>
+          <option value="year">This Year</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-category">Waste Category</label>
+        <select id="filter-category" [(ngModel)]="reportFilter.wasteCategory" name="wasteCategory">
+          <option value="all">All Categories</option>
+          @for (cat of wasteCategories; track cat.name) {
+            <option [value]="cat.name">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-volunteer">Volunteer</label>
+        <select id="filter-volunteer" [(ngModel)]="reportFilter.volunteer" name="volunteer">
+          <option value="all">All Volunteers</option>
+          <option value="amit">Amit Kumar</option>
+          <option value="priya">Priya Sharma</option>
+          <option value="raj">Raj Patel</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-export" id="export-csv-btn">
+          <i class="bi bi-filetype-csv" aria-hidden="true"></i> Export CSV
+        </button>
+        <button class="btn-export" id="export-pdf-btn">
+          <i class="bi bi-filetype-pdf" aria-hidden="true"></i> Export PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin stat cards -->
+    <div class="admin-stats reveal">
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: #e3f2fd; color: #1565c0;">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <span class="admin-stat-value" data-counter="2450" data-suffix="">0</span>
+          <span class="admin-stat-label">Total Users</span>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: #e8f5e9; color: #2e7d32;">
+          <i class="bi bi-truck"></i>
+        </div>
+        <div>
+          <span class="admin-stat-value" data-counter="187" data-suffix="">0</span>
+          <span class="admin-stat-label">Volunteers</span>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: #fff3e0; color: #e65100;">
+          <i class="bi bi-box-seam-fill"></i>
+        </div>
+        <div>
+          <span class="admin-stat-value" data-counter="8920" data-suffix="">0</span>
+          <span class="admin-stat-label">Total Pickups</span>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: #f3e5f5; color: #6a1b9a;">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div>
+          <span class="admin-stat-value" data-counter="94" data-suffix="%">0</span>
+          <span class="admin-stat-label">Completion Rate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid reveal">
+      <div class="chart-card">
+        <h4><i class="bi bi-graph-up" aria-hidden="true"></i> Pickup Trends</h4>
+        <div id="line-chart" class="chart-container" role="img" aria-label="Line chart showing monthly pickup trends"></div>
+      </div>
+      <div class="chart-card chart-card-sm">
+        <h4><i class="bi bi-pie-chart" aria-hidden="true"></i> Waste Distribution</h4>
+        <div id="donut-chart" class="chart-container donut-container" role="img" aria-label="Donut chart showing waste category distribution"></div>
+      </div>
+      <div class="chart-card">
+        <h4><i class="bi bi-bar-chart" aria-hidden="true"></i> Volunteer Activity</h4>
+        <div id="bar-chart" class="chart-container" role="img" aria-label="Bar chart showing volunteer pickup counts"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DATA FLOW SUMMARY                                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dataflow-section" id="dataflow">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <span class="section-tag">Role-Based Access</span>
+      <h2>Data Flow &amp; Access Control</h2>
+    </div>
+    <div class="flow-cards reveal">
+      <div class="flow-card">
+        <div class="flow-badge user-badge"><i class="bi bi-person-fill"></i></div>
+        <h4>Citizens</h4>
+        <ul>
+          <li>Create pickup requests (→ Open)</li>
+          <li>Track status updates</li>
+          <li>Cannot assign volunteers</li>
+        </ul>
+      </div>
+      <div class="flow-arrow" aria-hidden="true"><i class="bi bi-arrow-right"></i></div>
+      <div class="flow-card">
+        <div class="flow-badge volunteer-badge"><i class="bi bi-truck"></i></div>
+        <h4>Volunteers</h4>
+        <ul>
+          <li>Accept Open requests (→ Accepted)</li>
+          <li>Complete pickups (→ Completed)</li>
+          <li>Coordinate via messaging</li>
+        </ul>
+      </div>
+      <div class="flow-arrow" aria-hidden="true"><i class="bi bi-arrow-right"></i></div>
+      <div class="flow-card">
+        <div class="flow-badge admin-badge"><i class="bi bi-shield-lock-fill"></i></div>
+        <h4>Admins</h4>
+        <ul>
+          <li>Monitor all platform activity</li>
+          <li>Control user activation</li>
+          <li>Generate and export reports</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- FOOTER                                                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<footer class="landing-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="nav-brand" (click)="scrollTo('hero')">
+        <i class="bi bi-recycle" aria-hidden="true"></i>
+        <span>WasteZero</span>
+      </a>
+      <p>Smart waste pickup for a cleaner, greener future.</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h5>Platform</h5>
+        <a (click)="scrollTo('about')">About</a>
+        <a (click)="scrollTo('lifecycle')">How It Works</a>
+        <a (click)="scrollTo('dashboards')">Dashboards</a>
+      </div>
+      <div class="footer-col">
+        <h5>Features</h5>
+        <a (click)="scrollTo('schedule')">Schedule Pickup</a>
+        <a (click)="scrollTo('opportunities')">Opportunities</a>
+        <a (click)="scrollTo('messaging')">Messaging</a>
+      </div>
+      <div class="footer-col">
+        <h5>Admin</h5>
+        <a (click)="scrollTo('reporting')">Reports</a>
+        <a (click)="scrollTo('dataflow')">Data Flow</a>
+      </div>
+    </div>
+    <div class="footer-cta">
+      <h5>Ready to get started?</h5>
+      @if (isLoggedIn()) {
+        <button class="btn-nav-primary" (click)="goToDashboard()">Go to Dashboard</button>
+      } @else {
+        <button class="btn-nav-primary" (click)="goToLogin()">Get Started Free</button>
+      }
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 WasteZero. All rights reserved.</p>
+  </div>
+</footer>

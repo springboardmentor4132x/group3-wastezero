@@ -1,0 +1,99 @@
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h2>Messages</h2>
+      <p>Communicate with users and volunteers about pickups</p>
+    </div>
+    <button class="btn-wz-primary" (click)="showNewConv = !showNewConv">
+      <i class="bi bi-pencil-square me-1"></i>New Message
+    </button>
+  </div>
+</div>
+
+<!-- New conversation panel -->
+<div *ngIf="showNewConv" class="card-wz mb-3">
+  <h6 class="fw-bold mb-3">Start New Conversation</h6>
+  <div class="row g-2 form-wz align-items-end">
+    <div class="col-md-5 form-group mb-0">
+      <label>Send To</label>
+      <select [(ngModel)]="newConvUserId">
+        <option value="">Select recipient...</option>
+        <option *ngFor="let v of volunteers; trackBy: trackById" [value]="v._id">{{ v.name }} ({{ v.role }})</option>
+      </select>
+    </div>
+    <div class="col-md-5 form-group mb-0">
+      <label>Message</label>
+      <input type="text" [(ngModel)]="newMessage" placeholder="Type a message..." (keyup.enter)="sendNewConv()" />
+    </div>
+    <div class="col-md-2">
+      <button class="btn-wz-primary w-100" (click)="sendNewConv()" [disabled]="sending">Send</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<div *ngIf="!loading" class="chat-container">
+  <!-- Conversations list -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">Conversations ({{ conversations.length }})</div>
+    <div *ngIf="!conversations.length" class="text-center py-4 text-muted" style="font-size:0.875rem">No conversations yet</div>
+    <div *ngFor="let conv of conversations; trackBy: trackById"
+      class="conversation-item"
+      [class.active]="selectedConv?.partner._id === conv.partner._id"
+      (click)="selectConversation(conv)">
+      <div class="d-flex align-items-center gap-2">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;flex-shrink:0">
+          {{ partnerInitials(conv.partner.name) }}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="conv-name">{{ conv.partner.name }}</div>
+          <div class="conv-preview">{{ conv.lastMessage.content | slice:0:30 }}{{ conv.lastMessage.content.length > 30 ? '...' : '' }}</div>
+        </div>
+        <div *ngIf="conv.unreadCount > 0">
+          <span class="badge bg-success rounded-pill">{{ conv.unreadCount }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat area -->
+  <div class="chat-area">
+    <!-- No conversation selected -->
+    <div *ngIf="!selectedConv" class="flex-grow-1 d-flex align-items-center justify-content-center text-muted flex-column gap-2">
+      <i class="bi bi-chat-square-text fs-1"></i>
+      <p>Select a conversation to start chatting</p>
+    </div>
+
+    <!-- Active conversation -->
+    <ng-container *ngIf="selectedConv">
+      <div class="chat-header">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem">
+          {{ partnerInitials(selectedConv.partner.name) }}
+        </div>
+        <div>
+          <div>{{ selectedConv.partner.name }}</div>
+          <div style="font-size:0.75rem;color:#94a3b8;font-weight:400">{{ selectedConv.partner.role }}</div>
+        </div>
+      </div>
+
+      <div class="messages-list">
+        <div *ngFor="let msg of messages; trackBy: trackById"
+          class="message-bubble"
+          [class.sent]="isMine(msg)"
+          [class.received]="!isMine(msg)">
+          <div>{{ msg.content }}</div>
+          <div class="msg-time">{{ msg.timestamp | date:'HH:mm · MMM d' }}</div>
+        </div>
+        <div #msgEnd></div>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" [(ngModel)]="newMessage" placeholder="Type a message..." (keyup.enter)="send()" />
+        <button class="btn-wz-primary" (click)="send()" [disabled]="sending || !newMessage.trim()" style="padding:8px 16px">
+          <i class="bi bi-send"></i>
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -1,0 +1,87 @@
+<div class="page-header">
+  <h2>User Management</h2>
+  <p>View, manage and monitor all platform users</p>
+</div>
+
+<div *ngIf="successMsg" class="alert-wz success mb-3">{{ successMsg }}</div>
+<div *ngIf="errorMsg" class="alert-wz error mb-3">{{ errorMsg }}</div>
+
+<!-- Filters -->
+<div class="card-wz mb-3">
+  <div class="row g-3 align-items-end form-wz">
+    <div class="col-md-5 form-group mb-0">
+      <label>Search</label>
+      <input type="text" [(ngModel)]="filter" placeholder="Search by name or email..." />
+    </div>
+    <div class="col-md-3 form-group mb-0">
+      <label>Role</label>
+      <select [(ngModel)]="roleFilter">
+        <option value="">All Roles</option>
+        <option value="user">User</option>
+        <option value="volunteer">Volunteer</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn-wz-outline" (click)="filter=''; roleFilter=''">Clear</button>
+    </div>
+    <div class="col-md-2 text-end">
+      <span class="text-muted" style="font-size:0.875rem">{{ filtered.length }} users</span>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-success"></div></div>
+
+<div class="card-wz" *ngIf="!loading">
+  <div class="table-responsive">
+    <table class="table-wz w-100">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Location</th>
+          <th>Joined</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of filtered; trackBy: trackById">
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--wz-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.75rem;flex-shrink:0">
+                {{ u.name?.charAt(0)?.toUpperCase() }}
+              </div>
+              <div>
+                <div class="fw-bold" style="font-size:0.875rem">{{ u.name }}</div>
+                <div class="text-muted" style="font-size:0.78rem">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge" [class.bg-success]="u.role==='volunteer'" [class.bg-primary]="u.role==='user'" [class.bg-danger]="u.role==='admin'" style="text-transform:capitalize">{{ u.role }}</span></td>
+          <td>{{ u.location || '-' }}</td>
+          <td>{{ u.createdAt | date:'mediumDate' }}</td>
+          <td>
+            <span *ngIf="!u.isSuspended" class="badge bg-success">Active</span>
+            <span *ngIf="u.isSuspended" class="badge bg-danger">Suspended</span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm" [class.btn-warning]="!u.isSuspended" [class.btn-success]="u.isSuspended" (click)="toggleSuspend(u)" style="font-size:0.75rem">
+                <i class="bi" [class.bi-pause-circle]="!u.isSuspended" [class.bi-play-circle]="u.isSuspended"></i>
+                {{ u.isSuspended ? 'Activate' : 'Suspend' }}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteUser(u)" style="font-size:0.75rem">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="!filtered.length">
+          <td colspan="6" class="text-center text-muted py-4">No users found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
