@@ -122,8 +122,9 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
     const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const genericOk = 'If that email is registered, a reset link has been sent.';
     // Always return 200 to prevent email enumeration
-    if (!user) return res.json({ message: 'If that email is registered, a reset link has been sent.' });
+    if (!user) return res.json({ message: genericOk, emailQueued: true });
 
     const token = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -138,10 +139,15 @@ router.post('/forgot-password', async (req, res) => {
       html: tpl.html,
       text: tpl.text,
     });
-    res.json({ message: 'If that email is registered, a reset link has been sent.' });
+    res.json({ message: genericOk, emailQueued: true });
   } catch (err) {
-    console.error('Forgot password error:', err);
-    res.status(500).json({ message: 'Failed to send email. Please try again.' });
+    const code = err?.code || 'UNKNOWN';
+    const msg = err?.message || 'Email delivery failed';
+    console.error(`Forgot password email delivery failed (${code}): ${msg}`);
+    return res.json({
+      message: "We're facing an issue sending reset emails right now. Please try again in a few minutes.",
+      emailQueued: false,
+    });
   }
 });
 

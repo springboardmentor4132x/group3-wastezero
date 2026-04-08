@@ -17,6 +17,7 @@ export class ForgotPasswordComponent {
   loading = false;
   success = false;
   error = '';
+  successMessage = 'Check your inbox for a password reset email.';
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
@@ -24,14 +25,23 @@ export class ForgotPasswordComponent {
     if (!this.email.trim()) return;
     this.loading = true;
     this.error = '';
-    this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email: this.email }).subscribe({
-      next: () => {
-        this.success = true;
+    this.success = false;
+    this.http.post<{ message?: string; emailQueued?: boolean }>(`${environment.apiUrl}/auth/forgot-password`, { email: this.email }).subscribe({
+      next: (res) => {
+        if (res?.emailQueued === false) {
+          this.error = res?.message
+            || "We're facing an issue sending reset emails right now. Please try again in a few minutes.";
+          this.success = false;
+        } else {
+          this.success = true;
+          this.successMessage = res?.message || 'Check your inbox for a password reset email.';
+        }
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.error = err.error?.message || err.error?.error || 'Something went wrong. Please try again.';
+        this.error = err?.error?.message
+          || "We're facing an issue sending reset emails right now. Please try again in a few minutes.";
         this.loading = false;
         this.cdr.markForCheck();
       },

@@ -1,6 +1,8 @@
 require('dotenv').config();
+const dns = require('dns');
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const cors = require('cors');
 const compression = require('compression');
 const mongoose = require('mongoose');
@@ -8,6 +10,18 @@ const connectDB = require('./config/db');
 const { initSocket, getOnlineUsers } = require('./socket');
 const { corsOriginHandler, getAllowedOrigins } = require('./config/cors');
 const isVercel = Boolean(process.env.VERCEL);
+
+if (typeof dns.setDefaultResultOrder === 'function') {
+  const desiredOrder = process.env.DNS_RESULT_ORDER
+    || ((process.env.SMTP_IP_FAMILY || '4') === '4' ? 'ipv4first' : undefined);
+  if (desiredOrder) {
+    try {
+      dns.setDefaultResultOrder(desiredOrder);
+    } catch (error) {
+      console.warn(`Unable to set DNS result order (${desiredOrder}): ${error.message}`);
+    }
+  }
+}
 
 // Connect to MongoDB
 connectDB().catch((error) => {
@@ -120,6 +134,83 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+function parsePositiveInt(value, fallback) {
+  const parsed = Number.parseInt(String(value || ''), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseBoolean(value, fallback) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+  return String(value).toLowerCase() === 'true';
+}
+
+function pingUrl(url) {
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch (error) {
+      return reject(error);
+    }
+
+    const client = parsed.protocol === 'https:' ? https : http;
+    const req = client.request(parsed, {
+      method: 'GET',
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'wastezero-self-ping/1.0',
+      },
+    }, (res) => {
+      // Drain data to free socket resources.
+      res.resume();
+      resolve(res.statusCode || 0);
+    });
+
+    req.on('timeout', () => {
+      req.destroy(new Error('Self-ping request timed out'));
+    });
+
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function startSelfPingScheduler(port) {
+  const defaultEnabled = !isVercel && process.env.NODE_ENV === 'production';
+  const enabled = parseBoolean(process.env.SELF_PING_ENABLED, defaultEnabled);
+  if (!enabled) {
+    return null;
+  }
+
+  const intervalMs = parsePositiveInt(process.env.SELF_PING_INTERVAL_MS, 30000);
+  const pingUrlTarget = process.env.SELF_PING_URL || `http://127.0.0.1:${port}/api/keepalive`;
+
+  const pingOnce = async () => {
+    try {
+      const statusCode = await pingUrl(pingUrlTarget);
+      if (statusCode >= 400 || statusCode === 0) {
+        console.warn(`Self-ping responded with status ${statusCode}`);
+      }
+    } catch (error) {
+      console.warn(`Self-ping failed: ${error.message}`);
+    }
+  };
+
+  // Prime a first ping shortly after startup, then continue on interval.
+  setTimeout(() => {
+    void pingOnce();
+  }, 5000);
+
+  const timer = setInterval(() => {
+    void pingOnce();
+  }, intervalMs);
+
+  console.log(`Self-ping scheduler enabled (${intervalMs}ms) -> ${pingUrlTarget}`);
+  return timer;
+}
+
 if (require.main === module) {
   // Only listen when run directly (not when require()'d by tests)
   server.listen(PORT, () => {
@@ -127,6 +218,7 @@ if (require.main === module) {
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Allowed origins: ${getAllowedOrigins().join(', ')}`);
     console.log(isVercel ? 'Socket.IO disabled on Vercel/serverless runtime' : 'Socket.IO ready for connections');
+    startSelfPingScheduler(PORT);
   });
   server.keepAliveTimeout = 65000;
   server.headersTimeout = 66000;
