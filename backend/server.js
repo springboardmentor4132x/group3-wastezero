@@ -12,9 +12,12 @@ connectDB();
 
 const app = express();
 const server = http.createServer(app);
+const isVercel = Boolean(process.env.VERCEL);
 
 // Initialise Socket.IO on the HTTP server
-initSocket(server);
+if (!isVercel) {
+  initSocket(server);
+}
 
 // ── Performance Middleware ─────────────────────────────────────────────────
 // Gzip/deflate all responses > 1KB
@@ -84,16 +87,17 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-if (!module.parent) {
+if (require.main === module) {
   // Only listen when run directly (not when require()'d by tests)
   server.listen(PORT, () => {
     console.log(`WasteZero Server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Allowed origins: ${getAllowedOrigins().join(', ')}`);
-    console.log('Socket.IO ready for connections');
+    console.log(isVercel ? 'Socket.IO disabled on Vercel/serverless runtime' : 'Socket.IO ready for connections');
   });
   server.keepAliveTimeout = 65000;
   server.headersTimeout = 66000;
 }
 
-module.exports = { app, server };
+module.exports = app;
+module.exports.server = server;
