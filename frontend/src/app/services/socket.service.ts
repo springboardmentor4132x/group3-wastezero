@@ -18,6 +18,7 @@ export class SocketService implements OnDestroy {
   private eventSubjects = new Map<string, Subject<any>>();
   private connected = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private socketDisabledNoticeShown = false;
 
   constructor(
     private auth: AuthService,
@@ -38,6 +39,14 @@ export class SocketService implements OnDestroy {
 
   /** Connect to Socket.IO server with JWT */
   connect(token: string): void {
+    if (!environment.socketEnabled) {
+      if (!this.socketDisabledNoticeShown) {
+        console.info('Socket.IO disabled for this deployment; using HTTP polling fallback only.');
+        this.socketDisabledNoticeShown = true;
+      }
+      return;
+    }
+
     const wsUrl = environment.socketUrl;
     if (!sharedSocket) {
       sharedSocket = io(wsUrl, {
