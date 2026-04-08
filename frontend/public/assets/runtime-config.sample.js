@@ -1,7 +1,7 @@
 window.__WZ_CONFIG__ = {
-  BACKEND_URL: 'https://your-backend-domain.vercel.app',
-  API_URL: 'https://your-backend-domain.vercel.app/api',
-  SOCKET_URL: 'https://your-backend-domain.vercel.app',
-  // Set true only if your backend runs on a long-lived host supporting Socket.IO.
-  SOCKET_ENABLED: false,
+  BACKEND_URL: 'https://your-backend-domain.onrender.com',
+  API_URL: 'https://your-backend-domain.onrender.com/api',
+  SOCKET_URL: 'https://your-backend-domain.onrender.com',
+  // Keep true for long-lived hosts like Render.
+  SOCKET_ENABLED: true,
 };

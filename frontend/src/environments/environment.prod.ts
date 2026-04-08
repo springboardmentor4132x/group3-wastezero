@@ -1,6 +1,5 @@
 const runtimeConfig = (globalThis as any).__WZ_CONFIG__ || {};
-const browserOrigin = (globalThis as any)?.location?.origin || '';
-const backendUrl = runtimeConfig.BACKEND_URL || browserOrigin || 'http://localhost:5000';
+const backendUrl = runtimeConfig.BACKEND_URL || 'https://wastezero-5g6q.onrender.com';
 const socketUrl = runtimeConfig.SOCKET_URL || backendUrl;
 
 function defaultSocketEnabled(url: string): boolean {
