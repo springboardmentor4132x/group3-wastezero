@@ -7,6 +7,7 @@ import { MessageService } from '../../services/message.service';
 import { UploadService } from '../../services/upload.service';
 import { FormsModule } from '@angular/forms';
 import { Pickup } from '../../models/models';
+import { finalize, timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-my-pickups',
@@ -26,6 +27,7 @@ export class MyPickupsComponent implements OnInit {
   msgContent = '';
   msgSending = false;
   msgError = '';
+  private readonly msgSendTimeoutMs = 20000;
   completionModalPickup: Pickup | null = null;
   completionFiles: File[] = [];
   completionPreviews: string[] = [];
@@ -168,14 +170,18 @@ export class MyPickupsComponent implements OnInit {
       receiver_id: this.msgModal.receiverId,
       content: this.msgContent,
       pickup_id: this.msgModal.pickup._id,
-    }).subscribe({
-      next: () => {
+    }).pipe(
+      timeout(this.msgSendTimeoutMs),
+      finalize(() => {
         this.msgSending = false;
+        this.cdr.markForCheck();
+      }),
+    ).subscribe({
+      next: () => {
         this.successMsg = 'Message sent!';
         this.closeMsgModal();
       },
       error: (err) => {
-        this.msgSending = false;
         this.msgError = err?.error?.message || 'Unable to send message.';
         this.cdr.markForCheck();
       },

@@ -268,13 +268,15 @@ router.post('/', protect, (req, res, next) => { req.uploadFolder = 'messages'; n
     try {
       emitToUser(receiver_id, 'chat:message', populated.toObject());
       const preview = content ? `${req.user.name}: ${content.slice(0, 80)}` : `${req.user.name} sent a file`;
-      await createNotification({
+      void createNotification({
         user_id: receiver_id,
         type: 'chat:message',
         title: 'New Message',
         message: preview,
         ref_id: message._id,
         ref_model: 'Message',
+      }).catch((notifErr) => {
+        console.error('Notification enqueue error:', notifErr.message);
       });
     } catch (e) { console.error('Socket/notif emit error:', e.message); }
 

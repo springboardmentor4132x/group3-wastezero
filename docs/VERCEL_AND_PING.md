@@ -16,6 +16,16 @@ Backend on Render (recommended)
   - Health check: `/api/keepalive`
 - Socket.IO remains enabled on Render because it runs as a long-lived Node process.
 
+Self-ping scheduler (built in)
+------------------------------
+- Backend now supports an internal keepalive scheduler.
+- Default behavior: enabled in production (non-Vercel), every 30 seconds.
+- Environment variables:
+  - `SELF_PING_ENABLED=true`
+  - `SELF_PING_INTERVAL_MS=30000`
+  - `SELF_PING_URL=https://wastezero-5g6q.onrender.com/api/keepalive` (optional; defaults to localhost)
+- Note: external uptime monitors are still recommended. If a platform fully suspends a service, internal timers cannot run while sleeping.
+
 Frontend (Vercel) — quick steps
 -------------------------------
 1. In Vercel, import the Git repository and choose the project.

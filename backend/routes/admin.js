@@ -258,12 +258,21 @@ router.post('/users/:id/reset-password-token', protect, adminOnly, async (req, r
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/reset-password?token=${token}`;
     const tpl = buildPasswordResetTemplate({ name: user.name, resetUrl });
 
-    await sendEmail({
-      to: user.email,
-      subject: 'WasteZero Password Reset Link',
-      html: tpl.html,
-      text: tpl.text,
-    });
+    let emailed = false;
+    let deliveryIssue = null;
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'WasteZero Password Reset Link',
+        html: tpl.html,
+        text: tpl.text,
+      });
+      emailed = true;
+    } catch (emailErr) {
+      deliveryIssue = "We're facing an issue sending emails right now. The reset token was created successfully; please try again in a few minutes.";
+      console.error(`Admin reset token email delivery failed (${emailErr?.code || 'UNKNOWN'}): ${emailErr?.message || 'Email delivery failed'}`);
+    }
 
     await createNotification({
       user_id: user._id,
@@ -279,10 +288,16 @@ router.post('/users/:id/reset-password-token', protect, adminOnly, async (req, r
       action: 'USER_PASSWORD_RESET_LINK_SENT',
       user_id: user._id,
       performedBy: req.user._id,
-      details: `Password reset token sent by admin to ${user.email}`,
+      details: `Password reset token ${emailed ? 'sent' : 'generated'} by admin for ${user.email}`,
     });
 
-    res.json({ message: 'Password reset link sent successfully' });
+    res.json({
+      message: emailed
+        ? 'Password reset link sent successfully.'
+        : deliveryIssue,
+      emailed,
+      resetUrl: emailed ? null : resetUrl,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

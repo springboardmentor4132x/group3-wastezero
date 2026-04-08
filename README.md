@@ -221,6 +221,25 @@ Render supports long-running Node processes, so backend realtime features (Socke
 - SMTP variables for forgot-password / notification emails:
     - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`
 
+### Email Delivery Resilience (Forgot Password + Admin Reset Link)
+- The backend now handles SMTP delivery failures gracefully.
+- `POST /api/auth/forgot-password` always returns `200` for privacy and anti-enumeration.
+- If email delivery fails, response includes:
+    - `emailQueued: false`
+    - a user-friendly message (`We're facing an issue sending reset emails right now...`).
+- `POST /api/admin/users/:id/reset-password-token` no longer fails with `500` when SMTP is unavailable.
+- Admin response now includes:
+    - `emailed: true|false`
+    - `resetUrl` fallback when email delivery fails (admin can share securely if needed).
+
+Recommended SMTP network settings on Render:
+- `SMTP_IP_FAMILY=4`
+- `DNS_RESULT_ORDER=ipv4first`
+- `SMTP_DNS_TIMEOUT_MS=10000`
+- `SMTP_CONNECTION_TIMEOUT_MS=10000`
+- `SMTP_GREETING_TIMEOUT_MS=10000`
+- `SMTP_SOCKET_TIMEOUT_MS=15000`
+
 ### Uptime Monitoring
 - Keep using `GET /api/keepalive` for external uptime monitors.
 - Suggested monitor interval: every 5 minutes.

@@ -199,6 +199,8 @@
 
                 <div class="msg-meta" [class.text-end]="isMine(msg)">
                   {{ msg.timestamp | date:'h:mm a' }}
+                  <span *ngIf="isPendingMessage(msg)" class="ms-1" style="color:#f59e0b">· Sending...</span>
+                  <span *ngIf="isFailedMessage(msg)" class="ms-1" style="color:#dc2626">· Failed to sync</span>
                   <i *ngIf="isMine(msg)" class="bi ms-1"
                      [class.bi-check2-all]="msg.isRead"
                      [class.bi-check2]="!msg.isRead"

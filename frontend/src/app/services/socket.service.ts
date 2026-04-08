@@ -19,6 +19,7 @@ export class SocketService implements OnDestroy {
   private connected = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private socketDisabledNoticeShown = false;
+  private activeToken: string | null = null;
 
   constructor(
     private auth: AuthService,
@@ -47,6 +48,15 @@ export class SocketService implements OnDestroy {
       return;
     }
 
+    // Guard repeated emissions from auth state updates.
+    if (
+      this.socket &&
+      this.activeToken === token &&
+      (this.socket.connected || this.socket.active)
+    ) {
+      return;
+    }
+
     const wsUrl = environment.socketUrl;
     if (!sharedSocket) {
       sharedSocket = io(wsUrl, {
@@ -60,6 +70,7 @@ export class SocketService implements OnDestroy {
 
     this.socket = sharedSocket;
     this.socket.auth = { token };
+  this.activeToken = token;
 
     this.socket.off('connect');
     this.socket.off('disconnect');
@@ -97,6 +108,7 @@ export class SocketService implements OnDestroy {
       this.socket.disconnect();
       this.connected = false;
     }
+    this.activeToken = null;
     this.stopHeartbeat();
   }
 

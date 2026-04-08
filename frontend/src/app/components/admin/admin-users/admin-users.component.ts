@@ -168,10 +168,15 @@ export class AdminUsersComponent implements OnInit {
     if (!this.resetTargetUser?._id) return;
     this.resetSubmitting = true;
     this.adminService.sendResetPasswordToken(this.resetTargetUser._id).subscribe({
-      next: () => {
+      next: (res) => {
         this.resetSubmitting = false;
         this.closeResetPasswordDialog();
-        this.successMsg = 'Password reset link token sent to user email.';
+        if (res?.emailed === false) {
+          const fallback = res?.resetUrl ? ` Manual reset link: ${res.resetUrl}` : '';
+          this.errorMsg = `${res?.message || "We're facing an issue sending emails right now."}${fallback}`;
+        } else {
+          this.successMsg = res?.message || 'Password reset link token sent to user email.';
+        }
         this.cdr.markForCheck();
       },
       error: (err) => {

@@ -24,6 +24,23 @@ function canSendNotificationEmail(user, notif) {
   return pref[key] !== false;
 }
 
+function queueNotificationEmail(user, notif) {
+  if (!user?.email || !canSendNotificationEmail(user, notif)) return;
+
+  // Run email delivery off the request path so API responses stay fast.
+  setImmediate(async () => {
+    try {
+      await sendNotificationEmail({
+        to: user.email,
+        userName: user.name,
+        notification: notif.toObject ? notif.toObject() : notif,
+      });
+    } catch (emailErr) {
+      console.error('Notification email failed:', emailErr.message);
+    }
+  });
+}
+
 // ── Create & emit notification (used internally by other controllers) ─────
 async function createNotification({ user_id, type, title, message, ref_id, ref_model, sendEmail = true }) {
   const notif = await Notification.create({
@@ -40,12 +57,8 @@ async function createNotification({ user_id, type, title, message, ref_id, ref_m
 
   try {
     const user = await User.findById(user_id).select('name email emailPreferences').lean();
-    if (sendEmail && user?.email && canSendNotificationEmail(user, notif)) {
-      await sendNotificationEmail({
-        to: user.email,
-        userName: user.name,
-        notification: notif.toObject(),
-      });
+    if (sendEmail) {
+      queueNotificationEmail(user, notif);
     }
   } catch (emailErr) {
     console.error('Notification email failed:', emailErr.message);

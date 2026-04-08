@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import { Message } from '../../models/models';
 import { Subscription, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, timeout, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-messages',
@@ -77,6 +77,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private subs: Subscription[] = [];
   private convPollTimer: ReturnType<typeof setInterval> | null = null;
   private pendingDirectUserId: string | null = null;
+  private readonly sendTimeoutMs = 20000;
 
   constructor(
     public auth: AuthService,
@@ -598,25 +599,75 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   send() {
     if ((!this.newMessage.trim() && !this.selectedFile) || !this.selectedConv || this.selectedConvLocked) return;
+
+    const receiverId = this.selectedConv.partner._id;
+    const rawContent = this.newMessage;
+    const displayContent = rawContent.trim();
+    const fileToSend = this.selectedFile;
+    const optimisticId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const optimisticMessage: any = {
+      _id: optimisticId,
+      sender_id: this.auth.currentUser?._id || '',
+      receiver_id: receiverId,
+      content: displayContent || (fileToSend ? 'Sending attachment...' : ''),
+      mediaUrl: null,
+      mediaType: fileToSend
+        ? (fileToSend.type.startsWith('image/') ? 'image' : fileToSend.type.startsWith('video/') ? 'video' : 'file')
+        : null,
+      isRead: false,
+      timestamp: new Date().toISOString(),
+      pending: true,
+      failed: false,
+    };
+
     this.sending = true;
-    this.socketService.emit('chat:typing', { receiverId: this.selectedConv.partner._id, typing: false });
+    this.messages = [...this.messages, optimisticMessage];
+    this.newMessage = '';
+    this.clearFile();
+    this.socketService.emit('chat:typing', { receiverId, typing: false });
+    this.cdr.markForCheck();
+    setTimeout(() => this.scrollBottom(), 80);
 
     const fd = new FormData();
-    fd.append('receiver_id', this.selectedConv.partner._id);
-    fd.append('content', this.newMessage);
-    if (this.selectedFile) fd.append('media', this.selectedFile);
+    fd.append('receiver_id', receiverId);
+    fd.append('content', rawContent);
+    if (fileToSend) fd.append('media', fileToSend);
 
-    this.messageService.sendMessage(fd).subscribe({
-      next: (msg) => {
-        this.messages = [...this.messages, msg];
-        this.newMessage = '';
-        this.clearFile();
+    this.messageService.sendMessage(fd).pipe(
+      timeout(this.sendTimeoutMs),
+      finalize(() => {
         this.sending = false;
+        this.cdr.markForCheck();
+      }),
+    ).subscribe({
+      next: (msg) => {
+        let replaced = false;
+        this.messages = this.messages.map((m: any) => {
+          if (String(m._id) === optimisticId) {
+            replaced = true;
+            return msg;
+          }
+          return m;
+        });
+        if (!replaced) {
+          this.messages = [...this.messages, msg];
+        }
         this.cdr.markForCheck();
         this.loadConversations();
         setTimeout(() => this.scrollBottom(), 80);
       },
-      error: () => { this.sending = false; this.cdr.markForCheck(); },
+      error: () => {
+        this.messages = this.messages.map((m: any) => {
+          if (String(m._id) === optimisticId) {
+            return { ...m, pending: false, failed: true };
+          }
+          return m;
+        });
+        this.showToast('Message is taking too long. Syncing conversation...');
+        this.loadMessages(receiverId, false, true);
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -666,6 +717,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
   isMine(msg: Message): boolean {
     const sid = typeof msg.sender_id === 'object' ? (msg.sender_id as any)._id : msg.sender_id;
     return sid === this.auth.currentUser?._id;
+  }
+
+  isPendingMessage(msg: any): boolean {
+    return !!msg?.pending;
+  }
+
+  isFailedMessage(msg: any): boolean {
+    return !!msg?.failed;
   }
 
   scrollBottom() {

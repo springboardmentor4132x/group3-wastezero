@@ -123,8 +123,8 @@ export class AdminService {
     return this.http.put<{ message: string; emailed?: boolean }>(`${this.apiUrl}/admin/users/${userId}/reset-password`, payload);
   }
 
-  sendResetPasswordToken(userId: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/admin/users/${userId}/reset-password-token`, {});
+  sendResetPasswordToken(userId: string): Observable<{ message: string; emailed?: boolean; resetUrl?: string | null }> {
+    return this.http.post<{ message: string; emailed?: boolean; resetUrl?: string | null }>(`${this.apiUrl}/admin/users/${userId}/reset-password-token`, {});
   }
 
   broadcastAlert(payload: {
