@@ -9,14 +9,19 @@ Overview
 Frontend (Vercel) — quick steps
 -------------------------------
 1. In Vercel, import the Git repository and choose the project.
-2. Set the Project Root to `frontend`.
-3. Build Command: `npm ci && npm run build --prefix frontend`
-4. Output Directory: `frontend/dist/frontend`
-5. Environment Variables (set in Vercel):
+2. Preferred: set Project Root to `frontend`.
+3. Install Command: `npm install --legacy-peer-deps`
+4. Build Command: `npm run build`
+5. Output Directory: `dist/frontend/browser`
+6. Alternative (if Project Root is `./`): this repo includes root `vercel.json` with:
+  - Install: `npm install --prefix frontend --legacy-peer-deps`
+  - Build: `npm run build --prefix frontend`
+  - Output: `frontend/dist/frontend/browser`
+7. Environment Variables (set in Vercel):
    - `API_URL` — full backend base URL (e.g. `https://api.example.com`)
    - `SOCKET_URL` — websocket URL (e.g. `wss://api.example.com` or same as `API_URL` with ws/s)
    - `FRONTEND_URL` — public frontend URL used in email links (e.g. `https://myapp.vercel.app`)
-6. If the app uses `frontend/public/assets/runtime-config.js`, keep it or generate an equivalent at build/runtime using these env vars.
+8. If the app uses `frontend/public/assets/runtime-config.js`, keep it or generate an equivalent at build/runtime using these env vars.
 
 Backend — hosting recommendation
 --------------------------------
